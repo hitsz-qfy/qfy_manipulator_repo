@@ -1,0 +1,7 @@
+<launch>
+	<!--node name="service" pkg="qfy_dynamixel" type="time_duration.py" output="screen"/-->
+	<node name="service" pkg="qfy_dynamixel" type="test1_service" output="screen"/>
+	<node name="client" pkg="qfy_dynamixel" type="test1_client" output="screen"/>
+	
+
+</launch>

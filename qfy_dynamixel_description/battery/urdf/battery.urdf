@@ -1,0 +1,43 @@
+<robot
+  name="battery">
+  <link
+    name="battery">
+    <inertial>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.5173" />
+      <inertia
+        ixx="0.00160244526592418"
+        ixy="9.01294654865895E-21"
+        ixz="1.54479688054531E-20"
+        iyy="0.000407370774091244"
+        iyz="6.59126027238814E-06"
+        izz="0.00173928623919951" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="1.5707963267949 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/battery/meshes/battery.stl" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="1.5707963267949 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/battery/meshes/battery.stl" />
+      </geometry>
+    </collision>
+  </link>
+</robot>

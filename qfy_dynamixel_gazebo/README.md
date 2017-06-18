@@ -1,0 +1,2 @@
+roslaunch airial_manipulator.launch
+rosrun rqt_gui rqt_gui

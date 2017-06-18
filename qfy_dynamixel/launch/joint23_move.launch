@@ -1,0 +1,4 @@
+<launch>
+	<node pkg="qfy_dynamixel" name="joint2_move" type="joint2_continue.py" output="screen"/>
+	<node pkg="qfy_dynamixel" name="joint3_move" type="joint3_continue.py" output="screen"/>
+</launch> 

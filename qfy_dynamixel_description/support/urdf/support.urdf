@@ -1,0 +1,43 @@
+<robot
+  name="support">
+  <link
+    name="support">
+    <inertial>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.77557" />
+      <inertia
+        ixx="0.00707171497289798"
+        ixy="-6.86035607612738E-09"
+        ixz="-2.13689589308639E-19"
+        iyy="0.00893208939876082"
+        iyz="1.49851650001741E-10"
+        izz="0.00198307455846823" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="1.5707963267949 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/support/meshes/support.stl" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="1.5707963267949 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/support/meshes/support.stl" />
+      </geometry>
+    </collision>
+  </link>
+</robot>

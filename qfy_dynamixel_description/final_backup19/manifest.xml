@@ -1,0 +1,6 @@
+<package>
+  <description brief="final_backup19">final_backup19</description>
+  <depend package="gazebo" />
+  <author>me</author>
+  <license>BSD</license>
+</package>

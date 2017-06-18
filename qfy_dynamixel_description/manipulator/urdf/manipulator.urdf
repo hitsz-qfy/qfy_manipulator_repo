@@ -1,0 +1,532 @@
+<robot
+  name="manipulator">
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="-0.1537 0.0015 -0.095451"
+        rpy="0 0 0" />
+      <mass
+        value="0.0092844" />
+      <inertia
+        ixx="1.9914E-06"
+        ixy="7.0781E-24"
+        ixz="5.3369E-08"
+        iyy="5.0819E-06"
+        iyz="-3.2416E-26"
+        izz="3.1044E-06" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/manipulator/meshes/base_link.stl" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.75294 0.75294 0.75294 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/manipulator/meshes/base_link.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="link64">
+    <inertial>
+      <origin
+        xyz="7.2861E-10 -0.015203 0.00045227"
+        rpy="0 0 0" />
+      <mass
+        value="0.072402" />
+      <inertia
+        ixx="2.9836E-05"
+        ixy="-1.4995E-12"
+        ixz="-2.2684E-13"
+        iyy="1.6961E-05"
+        iyz="-8.8059E-07"
+        izz="2.4901E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/manipulator/meshes/link64.stl" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/manipulator/meshes/link64.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_1"
+    type="fixed">
+    <origin
+      xyz="-0.13349 0.096418 -0.0205"
+      rpy="3.1416 -6.116E-17 -1.523" />
+    <parent
+      link="base_link" />
+    <child
+      link="link64" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="link106">
+    <inertial>
+      <origin
+        xyz="-0.023359 -0.0084976 0.00044644"
+        rpy="0 0 0" />
+      <mass
+        value="0.089205" />
+      <inertia
+        ixx="4.2283E-05"
+        ixy="-4.3725E-07"
+        ixz="2.8185E-08"
+        iyy="2.4813E-05"
+        iyz="-1.0537E-06"
+        izz="3.43E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/manipulator/meshes/link106.stl" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/manipulator/meshes/link106.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_2"
+    type="continuous">
+    <origin
+      xyz="0 0 0.023487"
+      rpy="1.6186 1.5708 0" />
+    <parent
+      link="link64" />
+    <child
+      link="link106" />
+    <axis
+      xyz="1 0 0" />
+  </joint>
+  <link
+    name="linkarm">
+    <inertial>
+      <origin
+        xyz="-9.3227E-05 -0.07138 -0.17931"
+        rpy="0 0 0" />
+      <mass
+        value="0.21403" />
+      <inertia
+        ixx="0.0024551"
+        ixy="-1.1429E-07"
+        ixz="1.548E-07"
+        iyy="0.0024031"
+        iyz="-0.0008166"
+        izz="0.0008983" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/manipulator/meshes/linkarm.stl" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.75294 0.75294 0.75294 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/manipulator/meshes/linkarm.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_3"
+    type="continuous">
+    <origin
+      xyz="-0.024013 0.007 0"
+      rpy="0.54369 1.5708 0" />
+    <parent
+      link="link106" />
+    <child
+      link="linkarm" />
+    <axis
+      xyz="1 0 0" />
+  </joint>
+  <link
+    name="linkax4">
+    <inertial>
+      <origin
+        xyz="0.03904 -0.0093585 -0.0005202"
+        rpy="0 0 0" />
+      <mass
+        value="0.054636" />
+      <inertia
+        ixx="1.6969E-05"
+        ixy="1.344E-06"
+        ixz="1.4485E-07"
+        iyy="1.7491E-05"
+        iyz="-1.3924E-08"
+        izz="1.9118E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/manipulator/meshes/linkax4.stl" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/manipulator/meshes/linkax4.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_4"
+    type="continuous">
+    <origin
+      xyz="0 -0.12202 -0.24053"
+      rpy="1.5708 -0.2045 -1.5708" />
+    <parent
+      link="linkarm" />
+    <child
+      link="linkax4" />
+    <axis
+      xyz="0 0 -1" />
+  </joint>
+  <link
+    name="linkax5">
+    <inertial>
+      <origin
+        xyz="-3.2644E-05 0.039802 0.00049655"
+        rpy="0 0 0" />
+      <mass
+        value="0.04395" />
+      <inertia
+        ixx="1.3927E-05"
+        ixy="-9.0321E-09"
+        ixz="1.4944E-09"
+        iyy="6.8979E-06"
+        iyz="1.497E-07"
+        izz="1.2135E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/manipulator/meshes/linkax5.stl" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/manipulator/meshes/linkax5.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_5"
+    type="continuous">
+    <origin
+      xyz="0.048959 0.0047251 -0.0007"
+      rpy="-3.1416 0.022658 1.5708" />
+    <parent
+      link="linkax4" />
+    <child
+      link="linkax5" />
+    <axis
+      xyz="0 1 0" />
+  </joint>
+  <link
+    name="linkax6">
+    <inertial>
+      <origin
+        xyz="0.03904 -0.0093585 0.022022"
+        rpy="0 0 0" />
+      <mass
+        value="0.054636" />
+      <inertia
+        ixx="1.6599E-05"
+        ixy="1.344E-06"
+        ixz="-5.0169E-09"
+        iyy="1.7121E-05"
+        iyz="6.221E-09"
+        izz="1.9118E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/manipulator/meshes/linkax6.stl" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/manipulator/meshes/linkax6.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_6"
+    type="revolute">
+    <origin
+      xyz="0 0.054882 0.024"
+      rpy="-3.1416 -8.0318E-16 2.2118" />
+    <parent
+      link="linkax5" />
+    <child
+      link="linkax6" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="linkax7">
+    <inertial>
+      <origin
+        xyz="-0.0080247 0.017921 8.8832E-05"
+        rpy="0 0 0" />
+      <mass
+        value="0.05132" />
+      <inertia
+        ixx="1.1889E-05"
+        ixy="4.1783E-07"
+        ixz="6.9039E-07"
+        iyy="1.7028E-05"
+        iyz="6.9888E-08"
+        izz="1.4001E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/manipulator/meshes/linkax7.stl" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/manipulator/meshes/linkax7.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_7"
+    type="revolute">
+    <origin
+      xyz="0.062341 0.0047251 0.022"
+      rpy="-3.1416 0.010138 1.5708" />
+    <parent
+      link="linkax6" />
+    <child
+      link="linkax7" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="finger1">
+    <inertial>
+      <origin
+        xyz="-0.11529 -0.16646 -0.51473"
+        rpy="0 0 0" />
+      <mass
+        value="0.012077" />
+      <inertia
+        ixx="1.0727E-05"
+        ixy="1.757E-06"
+        ixz="2.3135E-06"
+        iyy="8.3865E-06"
+        iyz="3.5869E-08"
+        izz="6.2543E-06" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/manipulator/meshes/finger1.stl" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.75294 0.75294 0.75294 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/manipulator/meshes/finger1.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_8"
+    type="revolute">
+    <origin
+      xyz="-0.37077 -0.26103 -0.30674"
+      rpy="-2.1071 -0.50791 2.9917" />
+    <parent
+      link="linkax7" />
+    <child
+      link="finger1" />
+    <axis
+      xyz="0.48635 -0.7511 -0.44645" />
+    <limit
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="finger2">
+    <inertial>
+      <origin
+        xyz="-0.14579 -0.18091 -0.52363"
+        rpy="0 0 0" />
+      <mass
+        value="0.012077" />
+      <inertia
+        ixx="1.088E-05"
+        ixy="1.8821E-06"
+        ixz="1.9944E-06"
+        iyy="8.4585E-06"
+        iyz="-8.5868E-08"
+        izz="6.0203E-06" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/manipulator/meshes/finger2.stl" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.75294 0.75294 0.75294 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/manipulator/meshes/finger2.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_9"
+    type="revolute">
+    <origin
+      xyz="-0.28855 -0.34309 -0.30674"
+      rpy="-2.1071 -0.50791 -3.0361" />
+    <parent
+      link="linkax7" />
+    <child
+      link="finger2" />
+    <axis
+      xyz="0.48635 -0.7511 -0.44645" />
+    <limit
+      effort="0"
+      velocity="0" />
+  </joint>
+</robot>

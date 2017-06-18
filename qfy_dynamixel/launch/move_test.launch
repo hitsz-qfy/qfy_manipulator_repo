@@ -1,0 +1,31 @@
+<launch>
+<!-- Start controller_manager-->
+	<node name="dynamixel_manager" pkg="dynamixel_controllers" type="controller_manager.py" required="true" output="screen">
+        <rosparam>
+            namespace: dxl_manager
+            serial_ports:
+                pan_tilt_port_ax:
+                    port_name: "/dev/dynamixel_ax"
+                    baud_rate: 1000000
+                    min_motor_id: 1
+                    max_motor_id: 25
+                    update_rate: 20
+                pan_tilt_port_mx:
+                    port_name: "/dev/dynamixel_mx"
+                    baud_rate: 1000000
+                    min_motor_id: 1
+                    max_motor_id: 25
+                    update_rate: 20
+        </rosparam>
+    </node>
+
+<!-- Start joint controller -->
+    <rosparam file="$(find qfy_dynamixel)/config/joint_multi.yaml" command="load"/>
+    <node name="controller_spawner_mx" pkg="dynamixel_controllers" type="controller_spawner.py"
+          args="--manager=dxl_manager
+                --port=pan_tilt_port_mx
+                multi_joint_controller
+                "
+          output="screen"/>
+
+</launch>
