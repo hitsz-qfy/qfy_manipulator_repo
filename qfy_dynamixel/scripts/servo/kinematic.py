@@ -12,7 +12,8 @@ import tf
 class Kinematic(object):
     def __init__(self,l2,l3,l4,l6):
         self.joint_id=['joint_1','joint_2','joint_3','joint_4','joint_5','joint_6','joint_7']
-        self.joint_value=[0.,0.,0.,0.,0.,0.,np.pi/2.]
+        # self.joint_value=[0.,0.,0.,0.,0.,0.,np.pi/2.]
+        self.joint_value = [0., 0., 0., 0., 0., 0., 0.]
         self.kinematic= np.mat(np.zeros((4,4)))
         self.l2, self.l3 , self.l4, self.l6= l2, l3, l4, l6
         # self.joint3_tmp = 0.
@@ -29,7 +30,8 @@ class Kinematic(object):
     def joint1_callback(self,msg):
         # print("joint1_state: %s"%msg.current_pos)
         #true value (pi/2 ============== 0)
-        self.joint_value[0]=msg.current_pos - np.pi/2.
+        # self.joint_value[0]=msg.current_pos - np.pi/2.
+        self.joint_value[0] = np.pi/2. - msg.current_pos
 
     def joint2_callback(self,msg):
         # print("joint2_state: %s" % msg.current_pos)
@@ -61,14 +63,56 @@ class Kinematic(object):
         # print("joint6_state: %s" % msg.current_pos)
         self.joint_value[5]=msg.current_pos
 
-
     def joint7_callback(self,msg):
         # print("joint6_state: %s" % msg.current_pos)
         self.joint_value[6]=msg.current_pos
 
     def cur_joint(self):
-        return [self.joint_value[0]+np.pi/2, -self.joint_value[1], self.tmp_3,  self.joint_value[3],
+    #     return [self.joint_value[0]+np.pi/2, -self.joint_value[1], self.tmp_3,  self.joint_value[3],
+    #             self.joint_value[4], self.joint_value[5], self.joint_value[6]]
+        return [np.pi/2.-self.joint_value[0], -self.joint_value[1], self.tmp_3,  self.joint_value[3],
                 self.joint_value[4], self.joint_value[5], self.joint_value[6]]
+
+    def kinematic_(self, joint_value):
+        joint_value[2] += np.pi/2
+
+        T01_ = np.mat([[cos(joint_value[0]), 0, sin(joint_value[0]), -self.l2 * cos(joint_value[0])],
+                      [sin(joint_value[0]), 0, -cos(joint_value[0]), -self.l2 * sin(joint_value[0])],
+                      [0, 1, 0, 0],
+                      [0, 0, 0, 1]
+                      ])
+
+        T12_ = np.mat([[cos(joint_value[1]), -sin(joint_value[1]), 0, self.l3 * cos(joint_value[1])],
+                      [sin(joint_value[1]), cos(joint_value[1]), 0, self.l3 * sin(joint_value[1])],
+                      [0, 0, 1, 0],
+                      [0, 0, 0, 1]
+                      ])
+
+        T23_ = np.mat([[cos(joint_value[2]), 0, sin(joint_value[2]), 0],
+                      [sin(joint_value[2]), 0, -cos(joint_value[2]), 0],
+                      [0, 1, 0, 0],
+                      [0, 0, 0, 1]
+                      ])
+
+        T34_ = np.mat([[cos(joint_value[3]), 0, -sin(joint_value[3]), 0],
+                      [sin(joint_value[3]), 0, cos(joint_value[3]), 0],
+                      [0, -1, 0, self.l4],
+                      [0, 0, 0, 1]
+                      ])
+
+        T45_ = np.mat([[cos(joint_value[4]), 0, sin(joint_value[4]), 0],
+                      [sin(joint_value[4]), 0, -cos(joint_value[4]), 0],
+                      [0, 1, 0, 0],
+                      [0, 0, 0, 1]
+                      ])
+
+        T56_ = np.mat([[cos(joint_value[5]), -sin(joint_value[5]), 0, 0],
+                      [sin(joint_value[5]), cos(joint_value[5]), 0, 0],
+                      [0, 0, 1, self.l6],
+                      [0, 0, 0, 1]
+                      ])
+        return T01_*T12_*T23_*T34_*T45_*T56_
+
 
     def kinematic_calcu(self):
         self.joint_value[2] += np.pi/2
@@ -85,7 +129,6 @@ class Kinematic(object):
                       [0, 0, 1, 0],
                       [0, 0, 0, 1]
                       ])
-
 
         T23 = np.mat([[cos(self.joint_value[2]), 0, sin(self.joint_value[2]),  0],
                       [sin(self.joint_value[2]), 0, -cos(self.joint_value[2]), 0],
