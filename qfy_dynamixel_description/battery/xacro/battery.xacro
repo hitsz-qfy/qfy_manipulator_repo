@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- origin of joint connecting battery and mav -->
+  <xacro:property name="battery_joint_origin">
+    <origin xyz="0 0 -0.095" rpy="1.5707963267948966 0 0.7853981633974483" />
+  </xacro:property>
+
+  <!-- link1 -->
+  <xacro:macro name="battery"  params="parent_link">
+    <link name="battery">
+      <inertial>
+        <origin
+          xyz="0 0 0"
+          rpy="0 0 0" />
+        <mass
+          value="0.01" />
+        <inertia
+          ixx="0.00160244526592418"
+          ixy="9.01294654865895E-21"
+          ixz="1.54479688054531E-20"
+          iyy="0.000407370774091244"
+          iyz="6.59126027238814E-06"
+          izz="0.00173928623919951" />
+      </inertial>
+      <visual>
+        <origin
+          xyz="0 0 0"
+          rpy="0 0 0" />
+        <geometry>
+          <mesh
+            filename="package://qfy_dynamixel_description/battery/meshes/battery.stl" />
+        </geometry>
+        <material
+          name="">
+          <color
+            rgba="1 1 1 1" />
+        </material>
+      </visual>
+      <collision>
+        <origin
+          xyz="0 0 0"
+          rpy="0 0 0" />
+        <geometry>
+          <mesh
+            filename="package://qfy_dynamixel_description/battery/meshes/battery.stl" />
+        </geometry>
+      </collision>
+    </link>
+
+    <!-- joint -->
+    <joint name="${namespace}/battery_joint" type="fixed">
+      <xacro:insert_block name="battery_joint_origin"  />
+      <parent link="${parent_link}" />
+      <child link="battery"  />
+    </joint>
+  </xacro:macro>
+</robot>

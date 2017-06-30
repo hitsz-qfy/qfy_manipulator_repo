@@ -1,0 +1,73 @@
+<launch>
+	<group>	
+	<node name="dynamixel_manager_ax" pkg="dynamixel_controllers" type="controller_manager.py" required="true" output="screen">
+        <rosparam>
+            namespace: dxl_manager
+            serial_ports:
+                pan_tilt_port_ax:
+                    port_name: "/dev/ttyUSB0"
+                    baud_rate: 1000000
+                    min_motor_id: 1
+                    max_motor_id: 25
+                    update_rate: 20
+        </rosparam>
+    </node>
+
+    <node name="dynamixel_manager_mx" pkg="dynamixel_controllers" type="controller_manager.py" required="true" output="screen">
+        <rosparam>
+            namespace: dxl_manager
+            serial_ports:
+                pan_tilt_port_mx:
+                    port_name: "/dev/ttyUSB1"
+                    baud_rate: 57142
+                    min_motor_id: 1
+                    max_motor_id: 25
+                    update_rate: 20
+        </rosparam>
+    </node>
+	</group>
+
+<!-- Start tilt joint controller -->
+    <rosparam file="$(find qfy_dynamixel)/config/joint_multi.yaml" command="load"/>
+    <node name="controller_spawner_ax" pkg="dynamixel_controllers" type="controller_spawner.py"
+          args="--manager=dxl_manager
+                --port pan_tilt_port_ax                
+				joint4_controller                       
+                joint5_controller
+                joint6_controller
+                "
+          output="screen"/>
+
+     <node name="controller_spawner_mx" pkg="dynamixel_controllers" type="controller_spawner.py"
+          args="--manager=dxl_manager
+                --port pan_tilt_port_mx
+				joint3_controller                
+                "
+          output="screen"/>
+
+  <!-- Start joints trajectory controller controller -->
+    <rosparam file="$(find qfy_dynamixel)/config/joint_multi_trajectory_controller.yaml" command="load"/>
+    <node name="controller_spawner_meta_ax" pkg="dynamixel_controllers" type="controller_spawner.py"
+          args="--manager=dxl_manager
+				--port pan_tilt_port_ax
+                --type=meta
+                f_arm_controller
+                joint4_controller
+                joint5_controller
+                joint6_controller
+                                                
+                "
+                
+     output="screen"/>
+    <node name="controller_spawner_meta_mx" pkg="dynamixel_controllers" type="controller_spawner.py"
+          args="--manager=dxl_manager
+				--port pan_tilt_port_mx
+                --type=meta
+                f_arm_controller
+                joint3_controller
+                                                
+                "
+                
+     output="screen"/>
+
+</launch>

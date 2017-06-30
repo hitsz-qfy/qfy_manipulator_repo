@@ -1,0 +1,58 @@
+<launch>
+  <arg name="mav_name" default="hummingbird"/>
+  <arg name="enable_logging" default="false" />
+  <arg name="enable_ground_truth" default="true" />
+  <arg name="log_file" default="$(arg mav_name)" />
+
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <!--arg name="world_name" value="$(find rotors_gazebo)/worlds/basic.world" /-->
+    <arg name="world_name" value="$(find qfy_dynamixel_description)/final_backup19/world/final_backup19.world" />
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug"  value="false"/>
+  </include>
+    
+    <include file="$(find rotors_gazebo)/launch/spawn_mav.launch">
+      <arg name="mav_name" value="$(arg mav_name)" />
+      <arg name="model" value="$(find qfy_dynamixel_description)/urdf/qfy_airial_manipulator.gazebo" />
+      <arg name="enable_logging" value="$(arg enable_logging)" />
+      <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
+      <arg name="log_file" value="$(arg log_file)"/>
+    </include>
+  
+
+  <group ns="$(arg mav_name)">
+
+    <node name="lee_position_controller_node" pkg="rotors_control" type="lee_position_controller_node" output="screen">
+      <rosparam command="load" file="$(find rotors_gazebo)/resource/lee_controller_$(arg mav_name).yaml" />
+      <rosparam command="load" file="$(find qfy_dynamixel_gazebo)/resource/octo_$(arg mav_name).yaml" />
+      <remap from="odometry" to="odometry_sensor1/odometry" />
+    </node>
+
+    <node name="hovering_experiment" pkg="rotors_gazebo" type="hovering_experiment" output="screen"/>
+    <!--node name="hovering_example" pkg="rotors_gazebo" type="hovering_example" output="screen"/-->
+
+    <rosparam file="$(find qfy_dynamixel_control)/config/manipulator_control.yaml" command="load"/>
+
+    <!--load the controllers -->
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+    output="screen" args="
+            joint_state_controller
+            joint2_position_controller
+            joint3_position_controller
+            joint4_position_controller
+            joint5_position_controller
+            joint6_position_controller
+            joint7_position_controller
+            joint8_position_controller
+            joint9_position_controller
+            "/>
+  </group>
+  
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" /> 
+</launch>

@@ -1,0 +1,107 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- origin of joint connecting support and mav -->
+  <xacro:property name="support_left_joint">
+    <origin xyz="0.15 0.15 -0.28" rpy="0 0 0" />
+  </xacro:property>
+  <xacro:property name="support_right_joint">
+    <origin xyz="-0.15 -0.15 -0.28" rpy="0 0 0" />
+  </xacro:property>
+  <xacro:property name="vc_origin_right">
+    <origin xyz="0 0 0" rpy="1.0471975511965976 0 -0.7853981633974483"/>
+  </xacro:property>
+  <xacro:property name="vc_origin_left">
+    <origin xyz="0 0 0" rpy="2.0943951023931953 0 -0.7853981633974483"/>
+  </xacro:property>
+
+  <!-- link1 -->
+  <xacro:macro name="support_left"  params="parent_link">
+    <link name="support_left">
+      <inertial>
+        <origin
+          xyz="0 0 0"
+          rpy="0 0 0" />
+        <mass
+          value="0.001" />
+        <inertia
+          ixx="0.00707171497289798"
+          ixy="-6.86035607612738E-09"
+          ixz="-2.13689589308639E-19"
+          iyy="0.00893208939876082"
+          iyz="1.49851650001741E-10"
+          izz="0.00198307455846823" />
+      </inertial>
+      <visual>
+        <xacro:insert_block name="vc_origin_left"/>
+        <geometry>
+          <mesh
+            filename="package://qfy_dynamixel_description/support/meshes/support.stl" />
+        </geometry>
+        <material
+          name="">
+          <color
+            rgba="1 1 1 1" />
+        </material>
+      </visual>
+      <collision>
+        <xacro:insert_block name="vc_origin_left"/>
+        <geometry>
+          <mesh
+            filename="package://qfy_dynamixel_description/support/meshes/support.stl" />
+        </geometry>
+      </collision>
+    </link>
+    <!-- joint1 -->
+    <joint name="${namespace}/support_joint_left" type="fixed">
+      <xacro:insert_block name="support_left_joint"  />
+      <parent link="${parent_link}" />
+      <child link="support_left"  />
+    </joint>
+  </xacro:macro>
+
+  <!-- link2 -->
+  <xacro:macro name="support_right"  params="parent_link">
+    <link name="support_right">
+      <inertial>
+        <origin
+          xyz="0 0 0"
+          rpy="0 0 0" />
+        <mass
+          value="0.001" />
+        <inertia
+          ixx="0.00707171497289798"
+          ixy="-6.86035607612738E-09"
+          ixz="-2.13689589308639E-19"
+          iyy="0.00893208939876082"
+          iyz="1.49851650001741E-10"
+          izz="0.00198307455846823" />
+      </inertial>
+      <visual>
+        <xacro:insert_block name="vc_origin_right"/>
+        <geometry>
+          <mesh
+            filename="package://qfy_dynamixel_description/support/meshes/support.stl" />
+        </geometry>
+        <material
+          name="">
+          <color
+            rgba="1 1 1 1" />
+        </material>
+      </visual>
+      <collision>
+        <xacro:insert_block name="vc_origin_right"/>
+        <geometry>
+          <mesh
+            filename="package://qfy_dynamixel_description/support/meshes/support.stl" />
+        </geometry>
+      </collision>
+    </link>
+    <!-- joint2 -->
+    <joint name="${namespace}/support_joint_right" type="fixed">
+      <xacro:insert_block name="support_right_joint"  />
+      <parent link="${parent_link}" />
+      <child link="support_right"  />
+    </joint>
+  </xacro:macro>
+</robot>

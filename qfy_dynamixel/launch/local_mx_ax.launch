@@ -1,0 +1,4 @@
+<launch>
+	<node pkg="qfy_dynamixel" name="joint_mx" type="mx_position_speed.py" output="screen"/>
+	<node pkg="qfy_dynamixel" name="joint_ax" type="ax_position_speed.py" output="screen"/>
+</launch>

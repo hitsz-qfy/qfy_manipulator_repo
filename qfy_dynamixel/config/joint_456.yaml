@@ -1,0 +1,51 @@
+joint4_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: joint_4
+    joint_speed: 2.0
+    motor:
+        id: 4
+        init: 512
+        min: 0
+        max: 1023
+
+joint5_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: joint_5
+    joint_speed: 2.0
+    motor:
+        id: 5
+        init: 512
+        min: 0
+        max: 1023
+
+joint6_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: joint_6
+    joint_speed: 2.0
+    motor:
+        id: 6
+        init: 512
+        min: 0
+        max: 1023
+
+joint7_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: joint_7
+    joint_speed: 2.0
+    motor:
+        id: 7
+        init: 512
+        min: 0
+        max: 1023
