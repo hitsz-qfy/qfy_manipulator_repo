@@ -8,12 +8,11 @@ from qfy_dynamixel.srv import *
 import pbvs_node
 import ibvs_node
 
-from dynamixel_msgs.msg import MultiJointCommand
-from dynamixel_msgs.msg import MotorStateFloatList, MotorStateFloat
 from dynamixel_driver.dynamixel_const import *
+from dynamixel_msgs.msg import MotorStateFloatList
 from qfy_dynamixel.msg import multi_joint_point, PbvsErrorStamped
 
-class Pbvs(object):
+class HybridVS(object):
     def __init__(self):
         self.tracker = track_2.Track()
         self.pbvs = pbvs_node.Pbvs()
@@ -21,18 +20,20 @@ class Pbvs(object):
 
         self.cur_mx_positions = [0., 0., 0.]
         self.cur_ax_positions = [0., 0., 0., 0.]
-        self.cur_total_positions = [0., 0., 0., 0., 0., 0., 0.]
         self.lambd = 0.025
         self.linear_v = np.matrix((0., 0., 0.))
         self.angle_v = np.matrix((0., 0., 0.))
         self.joint_jacobian = np.asmatrix(np.zeros((6,6)))
         self.joint_vel = np.asmatrix(np.zeros((6,1)))
+
         self.filter_cnt = 0
         self.window_size = 100
         self.filter_sum = [0., 0., 0., 0., 0., 0., 0.]
         self.filter_out = [0., 0., 0., 0., 0., 0., 0.]
 
         self.pub_joint = rospy.Publisher('/joint_goal_point', multi_joint_point, queue_size=10)
+        self.sub_joint_mx = rospy.Subscriber('/mx_joint_controller/state', MotorStateFloatList, self.mx_state_cb)
+        self.sub_joint_ax = rospy.Subscriber('/ax_joint_controller/state', MotorStateFloatList, self.ax_state_cb)
 
         # self.pub_error = rospy.Publisher('/pbvs_error', )
 
@@ -40,7 +41,24 @@ class Pbvs(object):
         self.joint_data.data = [0., 0., 0., 0., 0., 0., 0.,]
         self.joint_data.id = ['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7']
 
-        self.pbvs_error = PbvsErrorStamped()
+
+    def hybrid_error(self):
+        pass
+
+    def hybrid_interaction_mat(self):
+        pass
+
+    def mx_state_cb(self, msg):
+        for motor_state in msg.motor_states:
+            self.cur_mx_positions[(motor_state.id - msg.motor_states[0].id)] = motor_state.position
+
+    def ax_state_cb(self, msg):
+        for motor_state in msg.motor_states:
+            self.cur_ax_positions[(motor_state.id - msg.motor_states[0].id)] = motor_state.position
+
+    def get_cur_total_positions(self):
+        self.cur_total_positions = self.cur_mx_positions + self.cur_ax_positions
+        return self.cur_total_positions
 
     def get_camera_vel(self):
         self.linear_v = - self.lambd * (self.tracker.get_tcstar_o_mat() - self.tracker.get_tc_o_mat() + np.cross(self.tracker.get_tc_o_mat(), self.tracker.get_theta_u()))
@@ -63,9 +81,9 @@ class Pbvs(object):
 
     def check_get_tf(self):
         if self.tracker.get_now_tf():
-            return True
+            return self.tracker.get_tf
         else:
-            return False
+            return self.tracker.get_tf
 
     def filter_data(self, list_):
         if self.filter_cnt < self.window_size:

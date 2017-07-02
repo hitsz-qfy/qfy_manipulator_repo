@@ -21,6 +21,8 @@ class Ibvs(object):
 
         self.interaction_mat = np.matrix(np.zeros((8,6)))
         self.error_mat = np.matrix(np.zeros((8,1)))
+        self.weight_mat = np.asmatrix(np.identity(14))
+        self.h_vec = np.asmatrix(np.zeros((8,1)))
 
         self.camera_intrinsic_mat = np.asmatrix([[574.666883, 0.000000, 335.073855],
                                                  [0.000000, 574.765706, 247.464029],
@@ -60,6 +62,10 @@ class Ibvs(object):
 
         self.get_tf = False
 
+        self.safe_roi = 0.3 ###0 to 0.5
+        self.safe_range = {'xs_plus': 210., 'xs_minus': 400., 'ys_plus': 130., 'ys_minus': 310.}
+        self.image_border = {'x_up':  640., 'x_down': 0., 'y_up': 480., 'y_down': 0.}
+
     def calcu_error(self, points):
         self.error_mat.itemset(0, (points.p0.normalized.x - self.des_point0.normalized.x))
         self.error_mat.itemset(1, (points.p0.normalized.y - self.des_point0.normalized.y))
@@ -69,6 +75,7 @@ class Ibvs(object):
         self.error_mat.itemset(5, (points.p2.normalized.y - self.des_point2.normalized.y))
         self.error_mat.itemset(6, (points.p3.normalized.x - self.des_point3.normalized.x))
         self.error_mat.itemset(7, (points.p3.normalized.y - self.des_point3.normalized.y))
+        return self.error_mat
 
     def calcu_interaction_mat(self,points):
         i = 0
@@ -91,18 +98,53 @@ class Ibvs(object):
 
         return self.interaction_mat
 
-    def apriltag_points_cb(self,msg):
-        self.calcu_error(msg)
-        if self.check_get_tf():
-            cur_points_list = [msg.p0.normalized.x, msg.p0.normalized.y,
-                               msg.p1.normalized.x, msg.p1.normalized.y,
-                               msg.p2.normalized.x, msg.p2.normalized.y,
-                               msg.p3.normalized.x, msg.p3.normalized.y]
-            self.calcu_interaction_mat(cur_points_list)
-
-
     def check_get_tf(self):
         if self.tracker.get_now_tf():
             return self.tracker.get_tf
         else:
             return self.tracker.get_tf
+
+    def get_entries(self, list_):
+        self.calcu_safe_range()
+        for i in xrange(len(list_)):
+            if i%2 == 0:
+                if list_[i] > self.safe_range['xs_plus']:
+                    self.h_vec.itemset(i, (list_[i] - self.safe_range['xs_plus']) / (self.image_border['x_up'] - list_[i]))
+                elif list_[i] < self.safe_range['xs_minus']:
+                    self.h_vec.itemset(i, (list_[i] - self.safe_range['xs_minus']) / (self.image_border['x_down'] - list_[i]))
+                else:
+                    self.h_vec.itemset(i, 0.)
+            else:
+                if list_[i] > self.safe_range['ys_plus']:
+                    self.h_vec.itemset(i, (list_[i] - self.safe_range['ys_plus']) / (self.image_border['y_up'] - list_[i]))
+                elif list_[i] < self.safe_range['ys_minus']:
+                    self.h_vec.itemset(i, (list_[i] - self.safe_range['ys_minus']) / (self.image_border['y_down'] - list_[i]))
+                else:
+                    self.h_vec.itemset(i, 0.)
+
+
+    def calcu_safe_range(self):
+        self.safe_range['xs_minus'] = self.image_border['x_down'] + self.safe_roi * (self.image_border['x_up'] - self.image_border['x_down'])
+        self.safe_range['xs_plus']  = self.image_border['x_up'] - self.safe_roi * (self.image_border['x_up'] - self.image_border['x_down'])
+        self.safe_range['ys_minus'] = self.image_border['y_down'] + self.safe_roi * (self.image_border['y_up'] - self.image_border['y_down'])
+        self.safe_range['ys_plus']  = self.image_border['y_up'] - self.safe_roi * (self.image_border['y_up'] - self.image_border['y_down'])
+        return self.safe_range
+
+    def calcu_weight_mat(self, pixel_list):
+        self.get_entries(pixel_list)
+        ####not complete#####
+
+    def apriltag_points_cb(self,msg):
+        self.calcu_error(msg)
+        if self.check_get_tf():
+            cur_points_metric_list = [msg.p0.normalized.x, msg.p0.normalized.y,
+                               msg.p1.normalized.x, msg.p1.normalized.y,
+                               msg.p2.normalized.x, msg.p2.normalized.y,
+                               msg.p3.normalized.x, msg.p3.normalized.y]
+            cur_points_pixel_list = [msg.p0.pixel.x, msg.p0.pixel.y,
+                                     msg.p1.pixel.x, msg.p1.pixel.y,
+                                     msg.p2.pixel.x, msg.p2.pixel.y,
+                                     msg.p3.pixel.x, msg.p3.pixel.y]
+
+            self.calcu_interaction_mat(cur_points_metric_list)
+            self.calcu_weight_mat(cur_points_pixel_list)

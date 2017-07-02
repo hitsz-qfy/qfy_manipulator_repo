@@ -22,6 +22,8 @@ class Pbvs(object):
         self.angle_v = np.matrix((0., 0., 0.))
         self.joint_jacobian = np.asmatrix(np.zeros((6,6)))
         self.joint_vel = np.asmatrix(np.zeros((6,1)))
+        self.pbvs_error_mat = np.asmatrix(np.zeros((6,1)))
+        self.interaction_mat = np.matrix(np.zeros((6,6)))
         self.filter_cnt = 0
         self.window_size = 100
         self.filter_sum = [0., 0., 0., 0., 0., 0., 0.]
@@ -39,6 +41,25 @@ class Pbvs(object):
 
         self.pbvs_error = PbvsErrorStamped()
 
+    def calcu_interaction_mat(self):
+        a00 = - np.identity(3)
+        a01 = self.tracker.vector_skewmatrix(self.tracker.trans)
+        a10 = np.asmatrix(np.zeros((3,3)))
+        a11 = np.identity(3)
+        self.interaction_mat = np.bmat([[a00,a01], [a10,a11]])
+        return self.interaction_mat
+
+    def calcu_error(self):
+        self.get_error()
+        self.pbvs_error_mat.itemset(0, self.error_translation.item(0) )
+        self.pbvs_error_mat.itemset(1, self.error_translation.item(1) )
+        self.pbvs_error_mat.itemset(2, self.error_translation.item(2) )
+        self.pbvs_error_mat.itemset(3, self.error_orientation.item(0) )
+        self.pbvs_error_mat.itemset(4, self.error_orientation.item(1) )
+        self.pbvs_error_mat.itemset(5, self.error_orientation.item(2) )
+
+        return self.pbvs_error_mat
+
     def pub_error(self):
         self.pbvs_error.header.stamp = rospy.Time.now()
 
@@ -53,7 +74,6 @@ class Pbvs(object):
         self.pbvs_error.theta_mu.x = self.tracker.get_theta_u().item(0)
         self.pbvs_error.theta_mu.y = self.tracker.get_theta_u().item(1)
         self.pbvs_error.theta_mu.z = self.tracker.get_theta_u().item(2)
-
         self.pub_pbvs_error.publish(self.pub_pbvs_error)
 
     def mx_state_cb(self, msg):
@@ -128,38 +148,38 @@ class Pbvs(object):
         rospy.loginfo("joint positions : %s" % self.joint_data.data)
         self.pub_joint.publish(self.joint_data)
 
-if __name__ == '__main__':
-    rospy.init_node('pbvs_control', anonymous=True)
-    pbvs_control = Pbvs()
-    # pub_joint = rospy.Publisher('/joint_goal_point', multi_joint_point, queue_size=10)
-    # sub_joint_mx = rospy.Subscriber('/mx_joint_controller/state', MotorStateFloatList, mx_state_cb)
-    # sub_joint_ax = rospy.Subscriber('/ax_joint_controller/state', MotorStateFloatList, ax_state_cb)
-
-    # tracker = track_2.Track()
-    rate = rospy.Rate(50)
-
-    while not rospy.is_shutdown():
-        # tracker.get_now_tf()
-        # rospy.loginfo(tracker.rot)
-        # tracker.get_theta_u()
-        pbvs_control.tracker.get_now_tf()
-        pbvs_control.tracker.get_theta_u()
-        # rospy.loginfo(tracker.rot)
-        if pbvs_control.tracker.rot:
-
-            ## camera velocity####
-            # pbvs_control.get_camera_vel()
-            # linear_v = - lambd * (tracker.get_tcstar_o_mat() - tracker.get_tc_o_mat() + np.cross(tracker.get_tc_o_mat(), tracker.get_theta_u()))
-            # angle_v = - lambd * tracker.get_theta_u()
-
-            ## control law #####
-            # pbvs_control.control_law()
-            # joint_jacobian = tracker.get_joint_jacobian()
-            # joint_vel = np.dot(joint_jacobian.I, np.row_stack((linear_v.T, angle_v.T)))
-
-            # rospy.loginfo("\nlinear velocity : %s, angle velocity : %s" % (linear_v, angle_v))
-            # rospy.logwarn("\njoint velocity are : %s" % joint_vel)
-            # pbvs_control.get_error()
-            # pbvs_control.pub_joint_data()
-            pbvs_control.pub_error()
-        rate.sleep()
+# if __name__ == '__main__':
+#     rospy.init_node('pbvs_control', anonymous=True)
+#     pbvs_control = Pbvs()
+#     # pub_joint = rospy.Publisher('/joint_goal_point', multi_joint_point, queue_size=10)
+#     # sub_joint_mx = rospy.Subscriber('/mx_joint_controller/state', MotorStateFloatList, mx_state_cb)
+#     # sub_joint_ax = rospy.Subscriber('/ax_joint_controller/state', MotorStateFloatList, ax_state_cb)
+#
+#     # tracker = track_2.Track()
+#     rate = rospy.Rate(50)
+#
+#     while not rospy.is_shutdown():
+#         # tracker.get_now_tf()
+#         # rospy.loginfo(tracker.rot)
+#         # tracker.get_theta_u()
+#         pbvs_control.tracker.get_now_tf()
+#         pbvs_control.tracker.get_theta_u()
+#         # rospy.loginfo(tracker.rot)
+#         if pbvs_control.tracker.rot:
+#
+#             ## camera velocity####
+#             # pbvs_control.get_camera_vel()
+#             # linear_v = - lambd * (tracker.get_tcstar_o_mat() - tracker.get_tc_o_mat() + np.cross(tracker.get_tc_o_mat(), tracker.get_theta_u()))
+#             # angle_v = - lambd * tracker.get_theta_u()
+#
+#             ## control law #####
+#             # pbvs_control.control_law()
+#             # joint_jacobian = tracker.get_joint_jacobian()
+#             # joint_vel = np.dot(joint_jacobian.I, np.row_stack((linear_v.T, angle_v.T)))
+#
+#             # rospy.loginfo("\nlinear velocity : %s, angle velocity : %s" % (linear_v, angle_v))
+#             # rospy.logwarn("\njoint velocity are : %s" % joint_vel)
+#             # pbvs_control.get_error()
+#             # pbvs_control.pub_joint_data()
+#             pbvs_control.pub_error()
+#         rate.sleep()

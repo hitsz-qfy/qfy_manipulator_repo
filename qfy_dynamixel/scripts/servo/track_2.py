@@ -506,7 +506,7 @@ class Track(object):
         return np.asmatrix(self.theta_u).T
 
     def vector_skewmatrix(self, vec):
-        if vec.size != 3:
+        if len(vec) != 3:
             rospy.logerr("vector size not correct")
         else:
             return np.mat([[0, -vec[2], vec[1]],
