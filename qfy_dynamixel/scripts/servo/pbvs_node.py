@@ -29,7 +29,7 @@ class Pbvs(object):
         self.filter_sum = [0., 0., 0., 0., 0., 0., 0.]
         self.filter_out = [0., 0., 0., 0., 0., 0., 0.]
 
-        self.pub_joint = rospy.Publisher('/joint_goal_point', multi_joint_point, queue_size=10)
+        # self.pub_joint = rospy.Publisher('/joint_goal_point', multi_joint_point, queue_size=10)
         self.pub_pbvs_error = rospy.Publisher('/pbvs_error', PbvsErrorStamped, queue_size=10)
         self.sub_joint_mx = rospy.Subscriber('/mx_joint_controller/state', MotorStateFloatList, self.mx_state_cb)
         self.sub_joint_ax = rospy.Subscriber('/ax_joint_controller/state', MotorStateFloatList, self.ax_state_cb)
@@ -42,6 +42,7 @@ class Pbvs(object):
         self.pbvs_error = PbvsErrorStamped()
 
     def calcu_interaction_mat(self):
+        self.tracker.get_now_tf()
         a00 = - np.identity(3)
         a01 = self.tracker.vector_skewmatrix(self.tracker.trans)
         a10 = np.asmatrix(np.zeros((3,3)))
@@ -146,7 +147,7 @@ class Pbvs(object):
         self.filter_data(self.joint_data.data)
         self.joint_data.data = self.filter_out
         rospy.loginfo("joint positions : %s" % self.joint_data.data)
-        self.pub_joint.publish(self.joint_data)
+        # self.pub_joint.publish(self.joint_data)
 
 # if __name__ == '__main__':
 #     rospy.init_node('pbvs_control', anonymous=True)

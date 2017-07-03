@@ -238,7 +238,7 @@ class Track(object):
         self.ax_cb_flag, self.pre_ax_cbflag = 0, 0
         self.tf_trans = TransformStamped()
         self.trans = []
-        self.ros = []
+        self.rot = []
         self.get_target = True
         self.not_get_flag = False
         self.tf_cb = False
@@ -246,8 +246,7 @@ class Track(object):
         self.get_tf = False
         self.no_invekine = False
         self.pull_up = False
-        self.rot = []
-        self.trans = []
+
         self.theta_u = np.array((0.,0.,0.))
 
     def tf_callback(self,msg):
@@ -508,6 +507,7 @@ class Track(object):
     def vector_skewmatrix(self, vec):
         if len(vec) != 3:
             rospy.logerr("vector size not correct")
+            rospy.loginfo(self.trans)
         else:
             return np.mat([[0, -vec[2], vec[1]],
                            [vec[2], 0, -vec[0]],
