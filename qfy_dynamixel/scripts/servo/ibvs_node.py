@@ -12,6 +12,7 @@ from dynamixel_msgs.msg import MotorStateFloatList, MotorStateFloat
 from dynamixel_driver.dynamixel_const import *
 from qfy_dynamixel.msg import multi_joint_point, PbvsErrorStamped
 from qfy_ibvs.msg import ImagePoint2D, FourImagePointStamped
+import pbvs_node
 
 class Ibvs(object):
     def __init__(self):
@@ -62,7 +63,7 @@ class Ibvs(object):
 
         self.get_tf = False
 
-        self.safe_roi = 0.3 ###0 to 0.5
+        self.safe_roi = 0.5 ###0 to 0.5
         self.safe_range = {'xs_plus': 210., 'xs_minus': 400., 'ys_plus': 130., 'ys_minus': 310.}
         self.image_border = {'x_up':  640., 'x_down': 0., 'y_up': 480., 'y_down': 0.}
 

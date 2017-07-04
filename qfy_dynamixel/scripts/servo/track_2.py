@@ -480,7 +480,7 @@ class Track(object):
             if rospy.Time.now().to_sec() - t.to_sec() < 0.2:
                 (self.trans, self.rot) = self.listener.lookupTransform('/camera', '/target1', t)
                 self.get_tf = True
-                rospy.logwarn_throttle(0.1, "Now Get target1")
+                rospy.logwarn("Now Get target1")
                 return True
             else:
                 self.get_tf = False
@@ -500,7 +500,6 @@ class Track(object):
 
     def get_theta_u(self):
         self.get_now_tf()
-
         self.theta_u , jaco = cv2.Rodrigues(tf.transformations.quaternion_matrix(self.rot))
         return np.asmatrix(self.theta_u).T
 

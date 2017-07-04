@@ -14,20 +14,20 @@ from qfy_dynamixel.msg import multi_joint_point, PbvsErrorStamped
 
 class HybridVS(object):
     def __init__(self):
-        self.tracker = track_2.Track()
+        # self.tracker = track_2.Track()
         self.pbvs = pbvs_node.Pbvs()
         self.ibvs = ibvs_node.Ibvs()
 
         self.cur_mx_positions = [0., 0., 0.]
         self.cur_ax_positions = [0., 0., 0., 0.]
-        self.lambd = 0.025
+        self.lambd = 0.25
         self.linear_v = np.matrix((0., 0., 0.))
         self.angle_v = np.matrix((0., 0., 0.))
         self.joint_jacobian = np.asmatrix(np.zeros((6,6)))
         self.joint_vel = np.asmatrix(np.zeros((6,1)))
 
         self.filter_cnt = 0
-        self.window_size = 100
+        self.window_size = 50
         self.filter_sum = [0., 0., 0., 0., 0., 0., 0.]
         self.filter_out = [0., 0., 0., 0., 0., 0., 0.]
 
@@ -73,9 +73,9 @@ class HybridVS(object):
 
     def control_law(self):
         self.get_camera_vel()
-        self.joint_jacobian = self.tracker.get_joint_jacobian()
+        self.joint_jacobian = self.pbvs.tracker.get_joint_jacobian()
         # rospy.loginfo('\n'+'%s'%self.joint_jacobian)
-        self.joint_vel = np.dot(self.joint_jacobian.I, np.concatenate((self.linear_v, self.angle_v),axis=0))
+        self.joint_vel = - np.dot(self.joint_jacobian.I, np.concatenate((self.linear_v, self.angle_v),axis=0))
         # rospy.loginfo('\n' + '%s' % self.joint_vel)
 
         return self.joint_vel
@@ -84,23 +84,25 @@ class HybridVS(object):
         return np.any(self.ibvs.calcu_interaction_mat()) and np.any(self.pbvs.calcu_interaction_mat())
 
     def check_get_tf(self):
-        if self.tracker.get_now_tf():
-            return self.tracker.get_tf
+        if self.pbvs.tracker.get_now_tf():
+            return self.pbvs.tracker.get_tf
         else:
-            return self.tracker.get_tf
+            return self.pbvs.tracker.get_tf
 
     def filter_data(self, list_):
-        ####problem####
         if self.filter_cnt < self.window_size:
             for i in xrange(7):
                 self.filter_sum[i] += list_[i]
                 # rospy.logwarn(i)
             self.filter_cnt += 1
         else:
-            rospy.logerr("error")
+            # rospy.logerr("error")
             self.filter_cnt = 0
             self.filter_out = list(self.filter_sum[i]/self.window_size for i in xrange(6)) + [0.]
             self.filter_sum = [0., 0., 0., 0., 0., 0., 0.]
+            if self.filter_out[0] != 0.:
+                self.joint_data.data = self.filter_out
+                self.pub_joint.publish(self.joint_data)
 
     def pub_joint_data(self):
         # tmp = []
@@ -112,10 +114,10 @@ class HybridVS(object):
         self.get_cur_total_positions()
         if self.check_get_tf() and self.check_interaction_mat():
             for i in list(xrange(1,3)):
-                self.joint_data.data[i] = self.cur_total_positions[i] + self.control_law().item(i)
+                self.joint_data.data[i] = self.cur_total_positions[i] - 2*self.control_law().item(i)
             self.joint_data.data[0] = self.cur_total_positions[0]
             self.joint_data.data[3] = 0.0
-            self.joint_data.data[4] = self.cur_total_positions[4] + self.control_law().item(4)
+            self.joint_data.data[4] = self.cur_total_positions[4] + 0.2 * self.control_law().item(4)
             self.joint_data.data[5] = 0.
             # rospy.logwarn("\njoint velocity are : %s" % self.joint_data.data)
             # self.pub_joint.pub)lish(self.joint_data)
@@ -124,11 +126,11 @@ class HybridVS(object):
             self.joint_data.data = self.get_cur_total_positions()
 
         self.filter_data(self.joint_data.data)
-        self.joint_data.data = self.filter_out
+        # self.joint_data.data = self.filter_out
         # rospy.loginfo("joint positions : %s" % self.joint_data.data)
-        if self.joint_data.data[0] != 0.:
-            rospy.logwarn("Can pub")
-            self.pub_joint.publish(self.joint_data)
+        # if self.joint_data.data[0] != 0.:
+        #     # rospy.logwarn("Can pub")
+        #     self.pub_joint.publish(self.joint_data)
 
 if __name__ == '__main__':
     rospy.init_node('pbvs_control', anonymous=True)
@@ -138,10 +140,10 @@ if __name__ == '__main__':
     rate = rospy.Rate(50)
 
     while not rospy.is_shutdown():
-        hybrid_control.tracker.get_now_tf()
-        hybrid_control.tracker.get_theta_u()
+        hybrid_control.pbvs.tracker.get_now_tf()
+        hybrid_control.pbvs.tracker.get_theta_u()
 
-        if hybrid_control.tracker.rot:
+        if hybrid_control.pbvs.tracker.rot:
             hybrid_control.pub_joint_data()
             # hybrid_control.hybrid_interaction_mat()
 
