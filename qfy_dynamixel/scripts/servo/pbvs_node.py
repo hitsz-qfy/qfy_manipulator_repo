@@ -17,7 +17,7 @@ class Pbvs(object):
         self.cur_mx_positions = [0., 0., 0.]
         self.cur_ax_positions = [0., 0., 0., 0.]
         self.cur_total_positions = [0., 0., 0., 0., 0., 0., 0.]
-        self.lambd = 0.025
+        # self.lambd = 0.025
         self.linear_v = np.matrix((0., 0., 0.))
         self.angle_v = np.matrix((0., 0., 0.))
         self.joint_jacobian = np.asmatrix(np.zeros((6,6)))
@@ -46,9 +46,11 @@ class Pbvs(object):
         a00 = - np.identity(3)
         a01 = self.tracker.vector_skewmatrix(self.tracker.trans)
         a10 = np.asmatrix(np.zeros((3,3)))
-        a11 = np.identity(3)
+        a11 = np.identity(3)   ###########attantion, 与原文不一致，　多了个负号#######
         self.interaction_mat = np.bmat([[a00,a01], [a10,a11]])
+        # rospy.loginfo(self.interaction_mat)
         return self.interaction_mat
+
 
     def calcu_error(self):
         self.get_error()
@@ -58,7 +60,7 @@ class Pbvs(object):
         self.pbvs_error_mat.itemset(3, self.error_orientation.item(0) )
         self.pbvs_error_mat.itemset(4, self.error_orientation.item(1) )
         self.pbvs_error_mat.itemset(5, self.error_orientation.item(2) )
-
+        # rospy.loginfo(self.pbvs_error_mat)
         return self.pbvs_error_mat
 
     def pub_error(self):
@@ -96,8 +98,14 @@ class Pbvs(object):
     #
     def get_error(self):
         self.error_translation = - self.tracker.get_tcstar_o_mat() + self.tracker.get_tc_o_mat()
-        self.error_orientation = self.tracker.get_theta_u()
+        # rospy.logwarn(self.error_translation)
+        self.error_orientation = self.tracker.get_theta_u()  ##### wrong 期望的角度不是０#######
+        # rospy.loginfo(self.error_orientation)
+
+
         # rospy.loginfo("translation error: %s , rotation error: %s"%(self.error_translation, self.error_orientation))
+
+
     #
     # def control_law(self):
     #     self.get_camera_vel()

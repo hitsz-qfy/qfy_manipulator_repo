@@ -19,6 +19,7 @@ class Kinematic(object):
         self.jacobian_mat = np.mat(np.zeros((6,6)))
         self.jacobian_array = np.asarray(self.jacobian_mat)
         self.l2, self.l3 , self.l4, self.l6= l2, l3, l4, l6
+        self.tmp_3 = 0.
         # self.joint3_tmp = 0.
 
         self.sub_mx = rospy.Subscriber('/mx_joint_controller/state', MotorStateFloatList, self.mx_joint_callback)
@@ -39,7 +40,8 @@ class Kinematic(object):
         self.joint_value[0] = np.pi/2. - msg.motor_states[0].position
         self.joint_value[1] = - msg.motor_states[1].position
         self.joint_value[2] = np.pi/2. + msg.motor_states[2].position
-        self.tmp_3 = msg.motor_states[2].position
+        self.tmp_3 = msg.motor_states[2].position + np.pi
+        # rospy.loginfo(self.tmp_3)
 
     def ax_joint_callback(self, msg):
         self.joint_value[3] = msg.motor_states[0].position
@@ -90,7 +92,7 @@ class Kinematic(object):
     def cur_joint(self):
     #     return [self.joint_value[0]+np.pi/2, -self.joint_value[1], self.tmp_3,  self.joint_value[3],
     #             self.joint_value[4], self.joint_value[5], self.joint_value[6]]
-        return [np.pi/2.-self.joint_value[0], -self.joint_value[1], self.tmp_3,  self.joint_value[3],
+        return [np.pi/2.-self.joint_value[0], -self.joint_value[1], self.joint_value[2] - np.pi/2,  self.joint_value[3],
                 self.joint_value[4], self.joint_value[5], self.joint_value[6]]
 
     def kinematic_(self, joint_value):
@@ -134,7 +136,7 @@ class Kinematic(object):
         return T01_*T12_*T23_*T34_*T45_*T56_
 
     def derive_kine(self):
-        self.joint_value[2] += np.pi / 2
+        # self.joint_value[2] += np.pi / 2
         # print("kinematic : %s"%self.joint_value)
 
         self.T01 = np.mat([[cos(self.joint_value[0]), 0, sin(self.joint_value[0]), -self.l2 * cos(self.joint_value[0])],
@@ -150,8 +152,8 @@ class Kinematic(object):
                            [0, 0, 0, 1]
                            ])
 
-        self.T23 = np.mat([[cos(self.joint_value[2]), 0, sin(self.joint_value[2]), 0],
-                           [sin(self.joint_value[2]), 0, -cos(self.joint_value[2]), 0],
+        self.T23 = np.mat([[cos(self.tmp_3), 0, sin(self.tmp_3), 0],
+                           [sin(self.tmp_3), 0, -cos(self.tmp_3), 0],
                            [0, 1, 0, 0],
                            [0, 0, 0, 1]
                            ])
@@ -226,6 +228,9 @@ class Kinematic(object):
             self.T04 = self.T03 * self.T34
             self.T05 = self.T04 * self.T45
             self.T06 = self.T05 * self.T56
+            # rospy.loginfo(self.T06)
+            # rospy.logwarn(self.joint_value[2]) ######## joint_value[2] has problem ##########
+
 
             z_0 = np.matrix((0,0,1)).T
             z_1 = self.T01[:3, 2]
@@ -253,5 +258,5 @@ class Kinematic(object):
                                               np.column_stack((z_0, z_1, z_2, z_3, z_4, z_5))))
 
             self.jacobian_array = np.asarray(self.jacobian_mat)
-
+            # rospy.loginfo(self.jacobian_mat)
             return self.jacobian_mat

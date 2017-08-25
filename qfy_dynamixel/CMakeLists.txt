@@ -27,6 +27,7 @@ add_message_files(
 add_service_files(
   FILES
   BeginGrasp.srv
+  MoveUAV.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -65,6 +66,10 @@ target_link_libraries(test1_client ${catkin_LIBRARIES})
 add_executable(test1_service src/test1_service.cpp)
 add_dependencies(test1_service ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(test1_service ${catkin_LIBRARIES})
+
+add_executable(keyboard src/keyboard.cpp)
+add_dependencies(keyboard ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(keyboard ${catkin_LIBRARIES})
 
 
 

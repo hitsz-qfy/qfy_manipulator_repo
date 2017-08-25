@@ -86,12 +86,12 @@ def pub_data():
 
         if i < len(joint_list)-1 and up_slope:
             i += 1
-            joint_speed_cmd = [0.4, 0.3, 0.5, 0.4]
+            joint_speed_cmd = [0.4, 0.3, 0.2, 0.4]
             if i == len(joint_list)-1:
                 up_slope = False
         else :
             i -= 1
-            joint_speed_cmd = [0.4, 0.3, 0.5, 0.4]
+            joint_speed_cmd = [0.4, 0.3, 0.2, 0.4]
             if i == 0 :
                 up_slope = True
 

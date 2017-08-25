@@ -19,7 +19,7 @@ class Multijoint(object):
         self.get_cmd = False
 
         self.multi_joint_data = MultiJointCommand()
-        self.joint_speed = [0.2,0.2,0.2,0.2,0.2,0.2,0.2]
+        self.joint_speed = [0.2,0.2,0.2,0.2,0.4,0.2,0.2]
 
         self.sub = rospy.Subscriber('/joint_goal_point', multi_joint_point, self.callback)
         self.pub_joint = rospy.Publisher('/'+self.name[0]+'x_joint_controller/command', MultiJointCommand, queue_size=10)

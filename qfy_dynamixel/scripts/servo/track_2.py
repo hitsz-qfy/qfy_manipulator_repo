@@ -15,7 +15,7 @@ from geometry_msgs.msg import TransformStamped
 # Oec = [-0.09683, 0.2514, 0.1072]#real
 # Oec = [-96.83, 0, 107.2]#virtual
 #camera wrt vrpn
-Oec = [-0.05, 0.00, 0.05]
+Oec = [-0.05, -0.00, 0.05]
 Rec_tmp = tf.transformations.quaternion_matrix(tf.transformations.quaternion_from_euler(-np.pi/2, 0.0, -np.pi/2))#(-1.603135, 0.14845945, -1.5597623)
 Rec = np.vstack(([tmp[:3] for tmp in Rec_tmp[:3]]))
 Tec_array = np.row_stack((np.column_stack((Rec,Oec)),[0,0,0,1]))
@@ -206,9 +206,14 @@ class Track(object):
         #                         [1, 0,  0,  0],#80
         #                         [0, 0,  0,  1]
         #                         ])
-        self.Tcstar_t = np.mat([[1, 0,  0,  -0.004],  # 30
-                                [0, 1,  0,  0],
-                                [0, 0,  1,  0.1],#0.065
+        self.Tcstar_t = np.mat([[1, 0,  0,  -0.04],  # 30
+                                [0, 1,  0,  0.0],
+                                [0, 0,  1,  0.2],#0.065
+                                [0, 0,  0,  1]
+                                ])
+        self.Tgrasp = np.mat([[1, 0,  0,    -0.05],  # 30
+                                [0, 1,  0,  -0.02],
+                                [0, 0,  1,  0.04],#0.065
                                 [0, 0,  0,  1]
                                 ])
 
@@ -261,7 +266,6 @@ class Track(object):
         self.tf_trans.transform.rotation.y = msg.transforms[-1].transform.rotation.y
         self.tf_trans.transform.rotation.z = msg.transforms[-1].transform.rotation.z
 
-
     # def m_result_callback(self,msg):
     #     if msg.status.status == 3:
     #         self.m_status = True
@@ -275,6 +279,7 @@ class Track(object):
         # self.kine=Kinematic(0.007,0.246,0.110,0.111)
         self.Tbe_mat = self.kine.kinematic_calcu()
         # rospy.loginfo("Calculate Kinematic Done!!!!")
+        return self.Tbe_mat
 
     def get_current_Tc_cstar(self,time):
         # if fabs(self.tf_trans.header.stamp.to_sec() - time.to_sec())< 0.01:
@@ -328,7 +333,10 @@ class Track(object):
         # return self.Tbd_mat*self.Tt_cstar
         # return self.Tbd_mat
         # print self.Tb_cstar_mat
-        return self.Tb_cstar_mat
+        return self.Tb_grasp_mat
+        # return self.Tb_cstar_mat
+        # return self.kine_calcu()
+
         # return self.Tbo_mat * Toc_mat * self.Tct_mat * self.Rtd * self.Tt_cstar
 
     def tf_pub(self):
@@ -350,6 +358,7 @@ class Track(object):
 
         self.Tbd_mat = Tbc_mat*self.Tct_mat*self.Rtd
         self.Tb_cstar_mat = self.Tbd_mat*self.Tcstar_t
+        self.Tb_grasp_mat = self.Tbd_mat* self.Tgrasp
 
         Tbo_array = np.array(self.Tbo_mat)
         Tbe_array = np.array(self.Tbe_mat)
@@ -477,10 +486,14 @@ class Track(object):
     def get_now_tf(self):
         if self.listener.frameExists('/camera') and self.listener.frameExists('/target1'):
             t = self.listener.getLatestCommonTime('/camera', '/target1')
-            if rospy.Time.now().to_sec() - t.to_sec() < 0.2:
+            if rospy.Time.now().to_sec() - t.to_sec() < 0.15:
                 (self.trans, self.rot) = self.listener.lookupTransform('/camera', '/target1', t)
+                # rospy.loginfo(tf.transformations.euler_from_quaternion(self.rot))
+                # rospy.logwarn(tf.transformations.quaternion_matrix(self.rot)[np.ix_([0,1,2],[0,1,2])])
+                # rospy.loginfo("\ntranslation: %s, \norientation: %s"%(self.trans, tf.transformations.euler_from_quaternion(self.rot)))
+                # rospy.loginfo(self.trans)
                 self.get_tf = True
-                rospy.logwarn("Now Get target1")
+                # rospy.logwarn("Now Get target1")
                 return True
             else:
                 self.get_tf = False
@@ -499,8 +512,29 @@ class Track(object):
         return np.asmatrix(self.Tcstar_t[:3, 3].T)
 
     def get_theta_u(self):
-        self.get_now_tf()
-        self.theta_u , jaco = cv2.Rodrigues(tf.transformations.quaternion_matrix(self.rot))
+        ############ problem ############
+        if self.get_now_tf():
+            d_rot = list(tf.transformations.euler_from_quaternion(self.rot))
+            d_rot[0] += np.pi  #### problem ####
+            # rospy.loginfo(d_rot)
+            self.theta_u , jaco = cv2.Rodrigues(
+                tf.transformations.euler_matrix(d_rot[0], d_rot[1], d_rot[2])[np.ix_([0,1,2],[0,1,2])])
+            # euler_ct = tf.transformations.euler_from_quaternion(self.rot)
+            # cHt = tf.transformations.euler_matrix(euler_ct[0], euler_ct[1], euler_ct[2])
+            # # rospy.logwarn(tf.transformations.euler_from_matrix(cHt))
+            #
+            # const_rot = np.matrix([[1,0,0,0],
+            #                        [0,-1,0,0],
+            #                        [0,0,-1,0],
+            #                        [0,0,0,1]])
+            #
+            # cur_rot = cHt * const_rot
+            # euler_cur = list(tf.transformations.euler_from_matrix(cur_rot))
+            # # rospy.loginfo(euler_cur)
+            #
+            # self.theta_u, jaco = cv2.Rodrigues(
+            #     tf.transformations.euler_matrix(euler_cur[0], euler_cur[1], euler_cur[2])[np.ix_([0, 1, 2], [0, 1, 2])])
+        # rospy.loginfo(self.theta_u)
         return np.asmatrix(self.theta_u).T
 
     def vector_skewmatrix(self, vec):
