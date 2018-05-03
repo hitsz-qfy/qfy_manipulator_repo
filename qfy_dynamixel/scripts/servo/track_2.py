@@ -21,6 +21,11 @@ Rec = np.vstack(([tmp[:3] for tmp in Rec_tmp[:3]]))
 Tec_array = np.row_stack((np.column_stack((Rec,Oec)),[0,0,0,1]))
 Tec_mat = np.mat(Tec_array)
 
+Ouav_b = [0.15, 0., -0.17]
+Ruav_b = tf.transformations.euler_matrix(0., np.pi/2, 0.)[np.ix_([0,1,2],[0,1,2])]
+Tuav_b = np.concatenate([np.concatenate([np.asmatrix(Ruav_b), np.asmatrix(Ouav_b).T], axis=1), np.matrix([0., 0., 0., 1.])], axis=0)
+
+
 # Ooc = [0.0, 0.0, 0.0]
 # Roc_tmp = tf.transformations.rotation_matrix(np.pi/2,(0,0,1))
 # Roc = np.vstack(([tmp[:3] for tmp in Roc_tmp[:3]]))
@@ -176,7 +181,7 @@ def invekine(n,a,P,a1=0.007,a2=0.280,d4=0.10387,d6=0.095):
     #value = [theta1 + np.pi / 2, theta2 + np.pi, np.pi*1.5 - theta3 , theta4, theta5, theta6] #origin
 
     #rospy.loginfo("origin: %s"%[theta1,theta2,theta3,theta4,theta5,theta6])
-    value = [-theta1 + np.pi / 2, -theta2, theta3 - np.pi/2, theta4, theta5, theta6]
+    value = [-theta1 + 1.65, -theta2, theta3 - np.pi/2, theta4, theta5, theta6]
     result = [round(i,2) for i in value]
     return result
     # return [theta1+1.570796, theta2+1.570796, theta3, theta4, theta5, theta6]
@@ -206,14 +211,15 @@ class Track(object):
         #                         [1, 0,  0,  0],#80
         #                         [0, 0,  0,  1]
         #                         ])
-        self.Tcstar_t = np.mat([[1, 0,  0,  -0.04],  # 30
-                                [0, 1,  0,  0.0],
+        self.Tcstar_t = np.mat([[1, 0,  0,  0.01],  # 30
+                                [0, 1,  0,  -0.01],
                                 [0, 0,  1,  0.2],#0.065
                                 [0, 0,  0,  1]
                                 ])
-        self.Tgrasp = np.mat([[1, 0,  0,    -0.05],  # 30
-                                [0, 1,  0,  -0.02],
-                                [0, 0,  1,  0.04],#0.065
+
+        self.Tgrasp = np.mat([[1, 0,  0,    0.0],  # 30
+                                [0, 1,  0,  -0.01],
+                                [0, 0,  1,  -0.06],#0.065
                                 [0, 0,  0,  1]
                                 ])
 
@@ -242,7 +248,7 @@ class Track(object):
         self.pub_flag = True
         self.ax_cb_flag, self.pre_ax_cbflag = 0, 0
         self.tf_trans = TransformStamped()
-        self.trans = []
+        self.trans = [0., 0., 0.]
         self.rot = []
         self.get_target = True
         self.not_get_flag = False
@@ -401,6 +407,18 @@ class Track(object):
 
         # br = tf.TransformBroadcaster()
         # br.sendTransform(
+        #     (Tuav_b.item(0,3), Tuav_b.item(1,3), Tuav_b.item(2,3)),
+        #
+        #     tf.transformations.quaternion_from_euler(tf.transformations.euler_from_matrix(Ruav_b)[0],
+        #                                              tf.transformations.euler_from_matrix(Ruav_b)[1],
+        #                                              tf.transformations.euler_from_matrix(Ruav_b)[2]
+        #                                              ),
+        #     rospy.Time.now(),
+        #     "base_link",
+        #     "uav_cur"
+        # )
+        #
+        # br.sendTransform(
         #     (Tbo_array[0, 3], Tbo_array[1, 3], Tbo_array[2, 3]),
         #
         #     tf.transformations.quaternion_from_matrix(Mbo),
@@ -483,26 +501,53 @@ class Track(object):
         array_goal = np.array(mat_goal)
         return (math.pow((array_cur[0,3] - array_goal[0,3]), 2) + math.pow((array_cur[2,3] - array_goal[2,3]), 2))
 
+    def final_joint_value(self):
+        self.goal_point.data = self.invekine()
+        # rospy.loginfo_throttle(1, self.Tb_t)
+        ####check current goal point####
+        kine_data_cur = [np.pi / 2 - self.goal_point.data[0], - self.goal_point.data[1],
+                         np.pi / 2 + self.goal_point.data[2], self.goal_point.data[3],
+                         self.goal_point.data[4], self.goal_point.data[5]]
+        kine_data_ops = [np.pi / 2 - self.goal_point.data[0], - self.goal_point.data[1],
+                         np.pi / 2 + self.goal_point.data[2], self.goal_point.data[3],
+                         -self.goal_point.data[4], self.goal_point.data[5]]
+        kine_cur_mat = self.kine.kinematic_(kine_data_cur)
+        kine_ops_mat = self.kine.kinematic_(kine_data_ops)
+        if self.check_goal(kine_cur_mat, self.Tb_t) < self.check_goal(kine_ops_mat, self.Tb_t):
+            rospy.logwarn_throttle(1, "Use original goal value!!!")
+
+        else:
+            rospy.logwarn_throttle(1, "Use changed goal value!!!")
+            self.goal_point.data[4] = - self.goal_point.data[4]
+        return self.goal_point.data
+
+
     def get_now_tf(self):
-        if self.listener.frameExists('/camera') and self.listener.frameExists('/target1'):
+        try:
+
             t = self.listener.getLatestCommonTime('/camera', '/target1')
-            if rospy.Time.now().to_sec() - t.to_sec() < 0.15:
+            # print t
+            # if self.listener.frameExists('target1'):
+            #     t = self.listener.getLatestCommonTime('/camera', '/target1')
+            if rospy.Time.now().to_sec() - t.to_sec() < 0.1:
                 (self.trans, self.rot) = self.listener.lookupTransform('/camera', '/target1', t)
                 # rospy.loginfo(tf.transformations.euler_from_quaternion(self.rot))
                 # rospy.logwarn(tf.transformations.quaternion_matrix(self.rot)[np.ix_([0,1,2],[0,1,2])])
                 # rospy.loginfo("\ntranslation: %s, \norientation: %s"%(self.trans, tf.transformations.euler_from_quaternion(self.rot)))
                 # rospy.loginfo(self.trans)
                 self.get_tf = True
-                # rospy.logwarn("Now Get target1")
+                rospy.logwarn_throttle(2,"Now Get target1")
                 return True
             else:
                 self.get_tf = False
                 rospy.logerr_throttle(1, "Time difference is : %f" % (rospy.Time.now().to_sec() - t.to_sec()))
                 return False
-        else:
-            self.get_tf = False
-            rospy.logerr("Do not get target1")
-            return False
+            # else:
+            #     self.get_tf = False
+            #     rospy.logerr("Do not get target1")
+            #     return False
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException, tf.Exception):
+            rospy.logerr_throttle(1,"Do not get target1")
 
     def get_tc_o_mat(self):
         self.get_now_tf()

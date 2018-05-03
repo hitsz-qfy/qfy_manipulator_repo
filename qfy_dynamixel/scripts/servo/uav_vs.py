@@ -5,83 +5,82 @@ import rospy
 import math
 from hybrid_vs_control import HybridVS
 from qfy_dynamixel.msg import multi_joint_point
-from qfy_dynamixel.srv import *
+from qfy_dynamixel.srv import BeginGrasp
 from control_msgs.msg import FollowJointTrajectoryActionResult
 from dynamixel_msgs.msg import MotorStateFloatList
 from std_msgs.msg import Bool
+import tf
 
-grasp_flag = False
-init_position = False
-trajectory_done = False
+class GraspPrc(object):
+    def __init__(self):
+        self.grasp_flag = False
+        self.init_position = False
+        self.trajectory_done = False
+        self.cur_joint = multi_joint_point()
+        self.cur_joint.id = ['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7']
+        self.cur_joint.data = [0.,0.,0.,0.,0.,0.,0.]
 
-cur_joint = multi_joint_point()
-cur_joint.id = ['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7']
-cur_joint.data = [0.,0.,0.,0.,0.,0.,0.]
+        self.check_joint_flag = Bool()
+        self.land_flag = Bool()
 
-check_joint_flag = Bool()
-land_flag = Bool()
+        self.init_grasp_time = rospy.Time.now()
 
-def handle_init_position(req):
-    global init_position
-    rospy.loginfo("Initialize the position of manipulator at time: %f"%req.header.stamp.secs)
-    init_position = True
-    return True
+        self.grasp_srv = rospy.Service('/begin_grasp', BeginGrasp, self.handle_grasp_call)
+        self.init_position_srv = rospy.Service('/init_position', BeginGrasp, self.handle_init_position)
 
-def handle_grasp_call(req):
-    global grasp_flag
-    time = req.header.stamp
-    rospy.loginfo("Begin to grasp at time : %f"%time.secs)
-    grasp_flag = True
-    return True
+        self.sub_ax_state = rospy.Subscriber('/ax_joint_controller/state', MotorStateFloatList,
+                                        self.ax_check_callback)
+        self.sub_mx_state = rospy.Subscriber('/mx_joint_controller/state', MotorStateFloatList,
+                                        self.mx_check_callback)
+        self.pub_joint_goal_point = rospy.Publisher('/joint_goal_point', multi_joint_point, queue_size=10)
+        self.pub_check_joint_trj = rospy.Publisher('/check_joint_trj', Bool, queue_size=10)
+        self.pub_land_signal = rospy.Publisher('/land_signal', Bool, queue_size=10)
 
-def ax_check_callback(msg):
-    global cur_joint
-    for motor_state in msg.motor_states:
-        cur_joint.data[motor_state.id - 1] = motor_state.position
+    def handle_init_position(self,req):
+        rospy.loginfo("Initialize the position of manipulator at time: %f" % req.header.stamp.secs)
+        self.init_position = True
+        return True
 
+    def handle_grasp_call(self,req):
+        rospy.loginfo("Begin to grasp at time : %f"%req.header.stamp.secs)
+        self.grasp_flag = True
+        self.init_grasp_time = rospy.Time.now()
+        return True
 
-def mx_check_callback(msg):
-    global cur_joint
-    for motor_state in msg.motor_states:
-        cur_joint.data[motor_state.id - 1] = motor_state.position
+    def ax_check_callback(self,msg):
+        for motor_state in msg.motor_states:
+            self.cur_joint.data[motor_state.id - 1] = motor_state.position
 
-def check_joint_trj(joint_cur, joint_des):
-    global trajectory_done, check_joint_flag
-    sum = 0.
-    if joint_cur[0] != 0.:
-        for i in xrange(len(joint_cur)):
-            # print("joint %d current value: %f"%(i, joint_cur[i]))
-            # print("joint %d desired value: %f"%(i, joint_des[i]))
-            sum += math.pow((joint_cur[i] - joint_des[i]),2)
-        if sum < 0.1:
-            trajectory_done = True
-            check_joint_flag.data = True
-            pub_check_joint_trj.publish(check_joint_flag)
-        else:
-            trajectory_done = False
-            check_joint_flag = False
-            pub_check_joint_trj.publish(check_joint_flag)
+    def mx_check_callback(self,msg):
+        for motor_state in msg.motor_states:
+            self.cur_joint.data[motor_state.id - 1] = motor_state.position
+
+    def check_joint_trj(self, joint_cur, joint_des):
+        sum = 0.
+        if joint_cur[0] != 0.:
+            for i in xrange(len(joint_cur)):
+                # print("joint %d current value: %f"%(i, joint_cur[i]))
+                # print("joint %d desired value: %f"%(i, joint_des[i]))
+                sum += math.pow((joint_cur[i] - joint_des[i]), 2)
+            if sum < 0.1:
+                self.trajectory_done = True
+                self.check_joint_flag = True
+                self.pub_check_joint_trj.publish(self.check_joint_flag)
+            else:
+                self.trajectory_done = False
+                self.check_joint_flag = False
+                self.pub_check_joint_trj.publish(self.check_joint_flag)
 
 
 if __name__ == '__main__':
     rospy.init_node('hybrid_vs_control', anonymous=True)
-    grasp_srv = rospy.Service('/begin_grasp', BeginGrasp, handle_grasp_call)
-    init_position_srv = rospy.Service('/init_position', BeginGrasp, handle_init_position)
-
-    sub_ax_state = rospy.Subscriber('/ax_joint_controller/state', MotorStateFloatList,
-                                    ax_check_callback)
-    sub_mx_state = rospy.Subscriber('/mx_joint_controller/state', MotorStateFloatList,
-                                    mx_check_callback)
-    pub_joint_goal_point = rospy.Publisher('/joint_goal_point', multi_joint_point, queue_size=10)
-    pub_check_joint_trj = rospy.Publisher('/check_joint_trj', Bool, queue_size=10)
-    pub_land_signal = rospy.Publisher('/land_signal', Bool, queue_size=10)
-
-    init_time = rospy.Time.now()
+    grasp_procedure = GraspPrc()
     hybrid_control = HybridVS()
+
 
     joint_p = multi_joint_point()
     joint_p.id = ['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7']
-    joint_p.data = [0., 0.0, 0., 0.0, 0., 0.0, 0.0]
+    joint_p.data = [0., 0., 0., 0., 0., 0., 0.]
 
     rate = rospy.Rate(100)
 
@@ -93,129 +92,83 @@ if __name__ == '__main__':
 
         #######################################
         ########## initialization and ready to visual ########
-        if init_position:
-            joint_p.header.stamp = rospy.Time.now()
-            joint_p.data = [1.57, 1.55, 1.2, 0.0, 0.5, 0.0, -0.8]
-            pub_joint_goal_point.publish(joint_p)
-            check_joint_trj(cur_joint.data, joint_p.data)
-            if trajectory_done:
-                rospy.loginfo("Initialization Done!!")
-                init_position = False
-                trajectory_done = False
+        if hybrid_control.emergency:
+            hybrid_control.pub_joint_data()
+            grasp_procedure.land_flag.data = True
+            rospy.logwarn_throttle(60,"Emergency!!! Landing!!!!")
+            if hybrid_control.check_arm_back():
+                grasp_procedure.pub_land_signal.publish(grasp_procedure.land_flag)
 
-        if grasp_flag:
-            joint_p.header.stamp = now
-            if now - init_time < rospy.Duration(5):
-                joint_p.data = [1.57, 1.0, 0.5, 0.0, 0.4, 0.0, 0.0]
-                pub_joint_goal_point.publish(joint_p)
-                rospy.loginfo_throttle(60, "Trying to find Apriltags!!")
-            else:
-                # hybrid_control.pbvs.tracker.get_now_tf()
+        else:
 
-                ########################################
-                ############ visual and grasp #############
-                hybrid_control.pbvs.tracker.get_theta_u()
+            if grasp_procedure.init_position:
+                joint_p.header.stamp = rospy.Time.now()
+                joint_p.data = [1.67, 1.54, 1.2, 0.0, 0.5, 0.0, -0.8]#-0.8 close, 0.2 open
+                grasp_procedure.pub_joint_goal_point.publish(joint_p)
+                grasp_procedure.check_joint_trj(grasp_procedure.cur_joint.data, joint_p.data)
 
-                if hybrid_control.pbvs.tracker.get_now_tf() and not hybrid_control.grasp_flag:
-                    if not hybrid_control.grasp_flag:
+                if grasp_procedure.trajectory_done:
+                    rospy.loginfo("Initialization Done!!")
+                    grasp_procedure.init_position = False
+                    grasp_procedure.trajectory_done = False
+                    # init_time = rospy.Time.now()
+                    # rospy.loginfo_throttle(60, "init_time : %f"%init_time.to_sec())
 
-                        hybrid_control.pub_joint_data()
-                        hybrid_control.move_uav_to_target()
+            if grasp_procedure.grasp_flag:
+                joint_p.header.stamp = now
 
+                if now - grasp_procedure.init_grasp_time < rospy.Duration(5):
+                    joint_p.data = [1.67, 1.0, 0.5, 0.0, 0.4, 0.0, 0.2]
+                    grasp_procedure.pub_joint_goal_point.publish(joint_p)
+                    rospy.loginfo_throttle(60, "Trying to find Apriltags!!")
+                else:
+                    # hybrid_control.pbvs.tracker.get_now_tf()
 
-                if hybrid_control.grasp_flag:
+                    ########################################
+                    ############ visual and grasp #############
+                    rospy.loginfo_throttle(60, "Hybrid visual procedure!!!")
+                    # hybrid_control.pbvs.tracker.listener.waitForTransform("/camera", "/target1", rospy.Time.now(), rospy.Duration(4.0))
+                    # try:
+                    #
+                    #     t = hybrid_control.pbvs.tracker.listener.getLatestCommonTime('/camera', '/target1')
+                    #     # print t
+                    #     # if self.listener.frameExists('target1'):
+                    #     #     t = self.listener.getLatestCommonTime('/camera', '/target1')
+                    #     if rospy.Time.now().to_sec() - t.to_sec() < 0.1:
+                    #         (hybrid_control.pbvs.tracker.trans, hybrid_control.pbvs.tracker.rot) = \
+                    #             hybrid_control.pbvs.tracker.listener.lookupTransform('/camera', '/target1', t)
+                    #         # rospy.loginfo(tf.transformations.euler_from_quaternion(self.rot))
+                    #         # rospy.logwarn(tf.transformations.quaternion_matrix(self.rot)[np.ix_([0,1,2],[0,1,2])])
+                    #         # rospy.loginfo("\ntranslation: %s, \norientation: %s"%(self.trans, tf.transformations.euler_from_quaternion(self.rot)))
+                    #         # rospy.loginfo(self.trans)
+                    #         hybrid_control.pbvs.tracker.get_tf = True
+                    #         rospy.logwarn_throttle(2, "Now Get target1")
+                    #     else:
+                    #         hybrid_control.pbvs.tracker.get_tf = False
+                    #         rospy.logerr_throttle(1, "Time difference is : %f" % (rospy.Time.now().to_sec() - t.to_sec()))
+                    #
+                    # except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException, tf.Exception):
+                    #     rospy.logerr_throttle(1, "No target1")
+                    #     continue
 
-                    if hybrid_control.grasp():
-                        land_flag.data = True
-                        pub_land_signal.publish(land_flag)
-                    else:
-                        land_flag.data = False
+                    hybrid_control.pbvs.tracker.get_now_tf()
+
+                    # hybrid_control.pbvs.tracker.get_theta_u()
+
+                    if hybrid_control.pbvs.tracker.get_now_tf() and not hybrid_control.grasp_flag:
+                        if not hybrid_control.grasp_flag:
+
+                            hybrid_control.pub_joint_data()
+                            # hybrid_control.get_fly_target_depth()
+                            # hybrid_control.move_uav_to_target()
+
+                    if hybrid_control.grasp_flag:
+                        rospy.loginfo_throttle(60, "Begin to grasp!!!!")
+                        if hybrid_control.grasp():
+                            grasp_procedure.land_flag.data = True
+                            rospy.loginfo_throttle(60,"landing flag is true")
+                            grasp_procedure.pub_land_signal.publish(grasp_procedure.land_flag)
+                        else:
+                            grasp_procedure.land_flag.data = False
 
         rate.sleep()
-
-
-# if __name__ == '__main__':
-#     rospy.init_node('track_client',anonymous=True)
-#     grasp_srv = rospy.Service('/begin_grasp', BeginGrasp, handle_grasp_call)
-#     init_position_srv = rospy.Service('/init_position', BeginGrasp , handle_init_position)
-#     sub_trjresult = rospy.Subscriber('/m_arm_controller/follow_joint_trajectory/result', FollowJointTrajectoryActionResult, result_callback)
-#     pub = rospy.Publisher('/joint_goal_point', multi_joint_point, queue_size=10)
-# 
-#     origin = []
-#     joint_p = multi_joint_point()
-#     joint_p.id = ['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7']
-#     rate = rospy.Rate(50)
-#     tf_cnt = 0
-# 
-#     time0 = rospy.Time()
-#     tracker = track.Track()
-# 
-#     while not rospy.is_shutdown():
-#         if init_position:
-#             joint_p.header.stamp = rospy.Time.now()
-#             joint_p.data = [1.57, 1.55, 1.2, 0.0, 0.5, 0.0, -0.8]
-#             pub.publish(joint_p)
-#             if trajectory_done:
-#                 rospy.loginfo("Initialization Done!!")
-#                 init_position = False
-#                 trajectory_done = False
-#         # Version 1: move when hovering , but no visual servoing
-#         # if grasp_flag:
-#         #     origin.append(rospy.Time.now())
-#         #     now = rospy.Time.now()
-#         #     joint_p.header.stamp = now
-#         #     if now - origin[0] < rospy.Duration(5):
-#         #         joint_p.data = [1.57, 0.33, 0.49, 0.0, -0.22, 0.0, -0.8]
-#         #         rospy.loginfo_throttle(60, "Push Forward!")
-#         #     elif now - origin[0] < rospy.Duration(10):
-#         #         joint_p.data = [1.57, 1.55, 1.2, 0.0, 0.5, 0.0, -0.8]
-#         #         rospy.loginfo_throttle(60, "Pull Back!")
-#         #     else:
-#         #         rospy.loginfo("Grasp Done!!!")
-#         #         grasp_flag = False
-#         #
-#         #     pub.publish(joint_p)
-# 
-#         #Version 2: visual servoing
-#         if grasp_flag:
-#             origin.append(rospy.Time.now())
-#             now = rospy.Time.now()
-#             joint_p.header.stamp = now
-#             if now - origin[0] < rospy.Duration(5):
-#                 joint_p.data = [1.57, 1.0, 0.5, 0.0, 0.4, 0.0, 0.0]
-#                 pub.publish(joint_p)
-#                 rospy.loginfo_throttle(60, "Trying to find Apriltags!!")
-#             else:
-#                 if tf_cnt <= 100:
-#                     if tracker.listener.frameExists('/camera') and tracker.listener.frameExists('/target1'):
-#                         t = tracker.listener.getLatestCommonTime('/camera', '/target1')
-#                         if rospy.Time.now().to_sec() - t.to_sec() < 0.2:
-#                             (tracker.trans, tracker.rot) = tracker.listener.lookupTransform('/camera', '/target1', t)
-#                             tracker.kine_calcu()
-#                             tracker.tf_pub()
-#                             tracker.desire_trans()
-#                             if tracker.invekine():
-#                                 tf_cnt += 1
-#                                 rospy.logwarn_throttle(1, "Now Get target1, counter: %d" % tf_cnt)
-#                             else:
-#                                 rospy.logerr_throttle(1, "Get target, but no inverse kinematic solution!!!")
-#                         else:
-#                             rospy.logerr_throttle(1, "Time difference is : %f" % (rospy.Time.now().to_sec() - t.to_sec()))
-#                         if tf_cnt == 90:
-#                             time0.from_sec(t.to_sec())
-#                 else:
-#                     if tracker.get_current_Tc_cstar(time0):
-#                         tracker.kine_calcu()
-#                         tracker.tf_pub()
-#                         tracker.desire_trans()
-#                         tracker.publish_goal()
-#                     else:
-#                         rospy.logerr_throttle(0.5, "No tf get!!")
-#                         # tracker.publish_goal()
-# 
-#         rate.sleep()
-
-
-
-
-

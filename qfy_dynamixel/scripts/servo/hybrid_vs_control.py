@@ -29,13 +29,20 @@ class HybridVS(object):
 
         self.cur_mx_positions = [0., 0., 0.]
         self.cur_ax_positions = [0., 0., 0., 0.]
-        self.lambd = 0.2
-        self.dls_const = 0.01
+        self.lambd = 0.5
+        self.dls_ibvs = 0.3 #0.068
+        self.dls_hybridvs = 0.3
+        self.dls_joint = 0.0
+        # self.dls_const = 0.0
+        self.dls_max = 0.25
+        self.ki = 0.04
+
         self.linear_v = np.matrix((0., 0., 0.))
         self.angle_v = np.matrix((0., 0., 0.))
         self.joint_jacobian = np.asmatrix(np.zeros((6,6)))
         self.joint_vel = np.asmatrix(np.zeros((6,1)))
         self.end_vel = np.asmatrix(np.zeros((6,1)))
+        self.incremental_err = np.asmatrix(np.zeros((14,1)))
 
         self.filter_cnt = 0
         self.window_size = 2
@@ -43,7 +50,8 @@ class HybridVS(object):
         self.filter_out = [0., 0., 0., 0., 0., 0., 0.]
 
         # self.height_const = rospy.get_param('/qfy_hover_node/beginpoint/z')
-        self.pub_joint = rospy.Publisher('/joint_goal_point', multi_joint_point, queue_size=10)
+        self.pub_joint = rospy.Publisher('/joint_goal_point_vs', multi_joint_point, queue_size=10)
+        self.pub_joint_goal = rospy.Publisher('/joint_goal_point', multi_joint_point, queue_size=10)
 
         self.pub_uav_move = rospy.Publisher('/uav_move', PoseStamped, queue_size=10)
         self.pub_mavros_vision = rospy.Subscriber('/mavros/vision_pose/pose', PoseStamped, self.mavros_vision_cb)
@@ -92,12 +100,13 @@ class HybridVS(object):
 
         self.pre_joint1 = 0.
         self.pre_joint6 = 0.
-        self.lowpass_co = 0.1
-        self.pre_camera_vel = []
+        self.lowpass_co = 0.3
+        self.pre_camera_vel = [0.,0.,0.,0.,0.,0.]
         self.flag = False
         self.grasp_flag = False
         self.first_grasp = True
         self.arrival = False
+        self.emergency = False
         self.first_grasp_time = rospy.Time()
         self.time_now = rospy.Time()
         self.fly_target_depth = 0.
@@ -112,7 +121,10 @@ class HybridVS(object):
 
         self.srv_move_uav = MoveUAV()
 
+
+
     def mavros_vision_cb(self,msg):
+        self.uav_vision_pose = PoseStamped()
         self.uav_vision_pose.pose.position.x = msg.pose.position.x
         self.uav_vision_pose.pose.position.y = msg.pose.position.y
         self.uav_vision_pose.pose.position.z = msg.pose.position.z
@@ -124,8 +136,8 @@ class HybridVS(object):
     def keyboard_cb(self,msg):
         if msg.data == 1.0:
             self.grasp_flag = True
-        if msg.data == 0.:
-            self.grasp_flag = False
+        if msg.data == 0.5:
+            self.emergency = True
 
     def mx_state_cb(self, msg):
         for motor_state in msg.motor_states:
@@ -142,18 +154,20 @@ class HybridVS(object):
     def hybrid_error(self):
         # rospy.loginfo("pbvs error: %s"%self.pbvs.calcu_error())
         # rospy.loginfo("ibvs error: %s"%self.ibvs.error_mat)
-        return np.concatenate([self.pbvs.calcu_error(), self.ibvs.error_mat], axis=0)
+        pbvs_error = self.pbvs.calcu_error()
+        return np.concatenate([pbvs_error, self.ibvs.error_mat], axis=0)
 
     def hybrid_interaction_mat(self):
         # rospy.loginfo(self.pbvs.calcu_interaction_mat())
         # rospy.loginfo(self.ibvs.calcu_interaction_mat())
-        return np.concatenate([self.pbvs.calcu_interaction_mat(), self.ibvs.calcu_interaction_mat()], axis=0)
+        pbvs_interaction = self.pbvs.calcu_interaction_mat()
+        ibvs_interaction = self.ibvs.calcu_interaction_mat()
+        return np.concatenate([pbvs_interaction, ibvs_interaction], axis=0)
 
     #######problem : 不能仅仅考虑旋转量的转换，还有平移量###############
     def get_end_effector_vel(self, camera_vel):
-        self.end_vel = self.const_vel_matrix * camera_vel   #######problem#########
+        # self.end_vel = self.const_vel_matrix * camera_vel   #######problem#########
         # rospy.logwarn(self.end_vel)
-
 
         self.linear_v.itemset(0, - camera_vel.item(1))
         self.linear_v.itemset(1, camera_vel.item(0))
@@ -182,13 +196,25 @@ class HybridVS(object):
 
     ########### OK ######################
     ############# need max value filter camera velocity ################
+
+    def low_pass(self, camera_vel):
+        # print len(camera_vel)
+        for i in xrange(len(camera_vel)):
+            camera_vel[i] = self.lowpass_co * camera_vel[i] + (1 - self.lowpass_co) * self.pre_camera_vel[i]
+
+        self.pre_camera_vel = camera_vel
+
     def get_camera_vel(self):
         ############## IBVS control ##################
         ##### pseudo-inverse #######
-        # self.flag = False
         # ibvs_int_mat = self.ibvs.calcu_interaction_mat()
-        # camera_vel_ibvs = - 0.4 * inv(ibvs_int_mat.T * ibvs_int_mat) * ibvs_int_mat.T * self.ibvs.error_mat
-        # camera_vel_ibvs.itemset()
+        # # u_, s_, d_ = np.linalg.svd(ibvs_int_mat)
+        # # rospy.logwarn(s_)
+        #
+        # self.dls_ibvs = self.get_dls_const(ibvs_int_mat)
+        # camera_vel_ibvs = - 1.2 * inv(ibvs_int_mat.T * ibvs_int_mat + self.dls_ibvs ** 2 * np.asmatrix(np.identity(6))) * ibvs_int_mat.T * self.ibvs.error_mat
+        # print "camera speed\n %.4f %.4f %.4f %.4f %.4f %.4f" %(camera_vel_ibvs[0],camera_vel_ibvs[1],camera_vel_ibvs[2],camera_vel_ibvs[3],camera_vel_ibvs[4],camera_vel_ibvs[5])
+        # rospy.logwarn(camera_vel_ibvs)
 
         # # print len(self.pre_camera_vel)
         # camera_vel_tmp = camera_vel.copy()
@@ -220,28 +246,74 @@ class HybridVS(object):
         # rospy.loginfo_throttle(0.1, camera_vel)
 
         ############## PBVS control ##################
-        # rospy.logwarn(self.pbvs.calcu_error())
-        # # rospy.loginfo(self.pbvs.calcu_interaction_mat())
-        # camera_vel_pbvs = - self.lambd * self.pbvs.calcu_interaction_mat() * self.pbvs.calcu_error()
-        # rospy.loginfo("camera vel : %s" % (camera_vel))
-        # self.get_end_effector_vel(camera_vel)
+        # pbvs_error = self.pbvs.calcu_error()
+        # pbvs_interaction = self.pbvs.calcu_interaction_mat()
+        # camera_vel_pbvs = - self.lambd * pbvs_interaction * pbvs_error
+
 
         ############## Hybrid control ###################
         hybrid_int_mat = self.hybrid_interaction_mat()
         hybrid_err = self.hybrid_error()
-        interaction_weight_mat = inv((self.ibvs.weight_mat * hybrid_int_mat).T * (self.ibvs.weight_mat * hybrid_int_mat)) * \
-                                 (self.ibvs.weight_mat * hybrid_int_mat).T
-        camera_vel_hybridvs =  - self.lambd * interaction_weight_mat * self.ibvs.weight_mat * hybrid_err
 
-        # rospy.loginfo_throttle(0.1, "camera vel : %s" % (camera_vel))
-        # camera_vel.itemset(0, - camera_vel.item(0))
-        # camera_vel.itemset(1, - camera_vel.item(1))
-        # camera_vel.itemset(2, - camera_vel.item(2))
-        # rospy.loginfo_throttle(0.1, "camera vel : %s" % (camera_vel_pbvs))
+        # rospy.loginfo(hybrid_err)
+
+        self.incremental_err += hybrid_err
+        for i in xrange(len(self.incremental_err)):
+            if self.incremental_err.item(i) > 1.0:
+                self.incremental_err.itemset(i,1.0)
+            elif self.incremental_err.item(i) < -1.0:
+                # rospy.loginfo("haha")
+                self.incremental_err.itemset(i,-1.0)
+
+        # rospy.logwarn(self.incremental_err)
+        # weighted_interaction_mat = self.ibvs.weight_mat * hybrid_int_mat
+        # self.normalize_mat(weighted_interaction_mat)
+
+        # u_, s_, d_ = np.linalg.svd(self.normalize_mat(weighted_interaction_mat))
+        # rospy.logwarn(s_)
+        # u_,s_,v_ = np.linalg.svd(weighted_interaction_mat)
+        # rospy.logwarn(s_)
+
+        # interaction_weight_mat = inv((self.ibvs.weight_mat * hybrid_int_mat).T * (self.ibvs.weight_mat * hybrid_int_mat) + self.dls_hybridvs**2 * np.asmatrix(np.identity(6)) ) * \
+        #                          (self.ibvs.weight_mat * hybrid_int_mat).T
+
+        interaction_weight_mat = inv((self.ibvs.weight_mat * hybrid_int_mat).T * ( self.ibvs.weight_mat * hybrid_int_mat)) * (self.ibvs.weight_mat * hybrid_int_mat).T
+
+        camera_vel_hybridvs =  - self.lambd * interaction_weight_mat * self.ibvs.weight_mat * ( hybrid_err + self.ki * self.incremental_err)
+        # camera_vel_hybridvs = - self.lambd * interaction_weight_mat * self.ibvs.weight_mat * hybrid_err ###original###
+
+
+        self.low_pass(camera_vel_hybridvs)
+        print "camera vel\n %.4f %.4f %.4f %.4f %.4f %.4f"%(camera_vel_hybridvs[0],camera_vel_hybridvs[1],camera_vel_hybridvs[2],camera_vel_hybridvs[3],camera_vel_hybridvs[4],camera_vel_hybridvs[5])
+
+        #######################################################3
+
+
         # self.get_end_effector_vel(camera_vel_ibvs)
         # self.get_end_effector_vel(camera_vel_pbvs)
         self.get_end_effector_vel(camera_vel_hybridvs)
 
+    def normalize_mat(self, mat):
+        u, s, v = np.linalg.svd(mat)
+        s_ = s / s[0]
+        if s_[5] < 0.1:
+            self.dls_hybridvs = (1 - (s_[5] / 0.1) **2) * 1.2
+            print self.dls_hybridvs**2
+        else:
+            self.dls_hybridvs = 0
+
+        #####problem: u, s ,d not matrix#############
+        resize_s = np.concatenate((np.diag(s_), np.zeros((8,6))), axis=0)
+        # rospy.loginfo("u shape: %s, resize_s: %s, v shape: %s" % (u.shape, resize_s.shape, v.shape))
+
+        return u*resize_s*v
+
+    def get_dls_const(self, jacobian):
+        u_, s_, d_ = np.linalg.svd(jacobian)
+        if s_[5] < 0.1:
+            return (1 - (s_[5] / 0.1) ** 2) * self.dls_max
+        else:
+            return (0.)
 
     ######## PROBLEM!!!!!!! ##############
     ########## OUT PUT HUGE OSCILLATION ABOUT ZERO###########
@@ -265,15 +337,47 @@ class HybridVS(object):
         #####################
 
         ########DLS(Damped Least-Square)#######
-        tmp = self.joint_jacobian * self.joint_jacobian.T + self.dls_const * \
-                                                            self.dls_const * np.asmatrix(np.identity(6))
+        u_, s_, d_= np.linalg.svd(self.joint_jacobian)
+        rospy.logwarn(s_[5]/s_[0])
+        # self.get_dls_const()
+        if s_[5]/s_[0] < 0.08:
+            self.dls_joint = (1 - (s_[5]/s_[0])/0.08) * 0.4
+            rospy.logwarn("dls const value is : %f"%self.dls_joint)
+        else:
+            self.dls_joint = 0.
+
+        tmp = self.joint_jacobian * self.joint_jacobian.T + self.dls_joint * \
+                                                            self.dls_joint * np.asmatrix(np.identity(6))
+        # tmp = self.joint_jacobian * self.joint_jacobian.T
         # rospy.logwarn(tmp)
 
         tmp_coff = self.joint_jacobian.T * inv(tmp)
 
-        # rospy.loginfo(tmp_coff)
+        orig_jaco = self.joint_jacobian.T * inv(self.joint_jacobian * self.joint_jacobian.T)
 
-        self.joint_vel = - np.dot(tmp_coff, np.concatenate((self.linear_v.T, self.angle_v.T), axis=0))
+
+        orgin_vel = - np.dot(orig_jaco, np.concatenate((self.linear_v.T, self.angle_v.T),axis=0))
+        dls_vel = - np.dot(tmp_coff, np.concatenate((self.linear_v.T, self.angle_v.T), axis=0))
+
+        ########DLS SOLUTION############
+        self.joint_vel.itemset(0 , orgin_vel.item(0))
+        self.joint_vel.itemset(1 , orgin_vel.item(1))
+        self.joint_vel.itemset(2 , orgin_vel.item(2))
+        self.joint_vel.itemset(3 , dls_vel.item(3))
+        self.joint_vel.itemset(4 , orgin_vel.item(4))
+        self.joint_vel.itemset(5 , dls_vel.item(5))
+        ################################
+
+        ########ORIGINAL SOLUTION########
+        # self.joint_vel.itemset(0, orgin_vel.item(0))
+        # self.joint_vel.itemset(1, orgin_vel.item(1))
+        # self.joint_vel.itemset(2, orgin_vel.item(2))
+        # self.joint_vel.itemset(3, orgin_vel.item(3))
+        # self.joint_vel.itemset(4, orgin_vel.item(4))
+        # self.joint_vel.itemset(5, orgin_vel.item(5))
+        #################################
+        # self.joint_vel = - np.dot(tmp_coff, np.concatenate((self.linear_v.T, self.angle_v.T), axis=0))
+
         # self.joint_vel = - np.dot(tmp_coff, self.end_vel)
         ######################################
 
@@ -286,14 +390,17 @@ class HybridVS(object):
         self.joint4_vel = self.joint_vel.item(3)
         self.joint5_vel = self.joint_vel.item(4)
         self.joint6_vel = self.joint_vel.item(5)
-        # rospy.loginfo("\njoint1_vel: %.5f\njoint2_vel: %.5f\njoint3_vel: %.5f\njoint4_vel: %.5f\njoint5_vel: %.5f\njoint6_vel: %.5f"%
-        #               (self.joint_vel.item(0), self.joint_vel.item(1), self.joint_vel.item(2), self.joint_vel.item(3), self.joint_vel.item(4), self.joint_vel.item(5)))
-        if -0.05< (self.joint4_vel + self.joint6_vel) < 0.05:
-            self.joint_vel.itemset(3, 0.)
-            self.joint_vel.itemset(5, 0.)
-        else:
-            self.joint_vel.itemset(3, (self.joint4_vel + self.joint6_vel))
-            self.joint_vel.itemset(5, 0.)
+
+        rospy.loginfo("\njoint1_vel: %.5f\njoint2_vel: %.5f\njoint3_vel: %.5f\njoint4_vel: %.5f\njoint5_vel: %.5f\njoint6_vel: %.5f"%
+                      (self.joint_vel.item(0), self.joint_vel.item(1), self.joint_vel.item(2), self.joint_vel.item(3), self.joint_vel.item(4), self.joint_vel.item(5)))
+
+        # rospy.loginfo("\njoint4 vel: %.5f\njoint6 vel: %.5f"%(self.joint_vel.item(3), self.joint_vel.item(5)))
+        # if -0.05< (self.joint4_vel + self.joint6_vel) < 0.05:
+        #     self.joint_vel.itemset(3, 0.)
+        #     self.joint_vel.itemset(5, 0.)
+        # else:
+        #     self.joint_vel.itemset(3, (self.joint4_vel + self.joint6_vel))
+        #     self.joint_vel.itemset(5, 0.)
 
         self.pub_joint1_vel.publish(self.joint1_vel)
         self.pub_joint2_vel.publish(self.joint2_vel)
@@ -324,21 +431,16 @@ class HybridVS(object):
         else:
             # rospy.logerr("error")
             self.filter_cnt = 0
-            self.filter_out = list(self.filter_sum[i]/self.window_size for i in xrange(6)) + [0.]
+            self.filter_out = list(self.filter_sum[i]/self.window_size for i in xrange(6)) + [0.2]
             self.filter_sum = [0., 0., 0., 0., 0., 0., 0.]
             if self.filter_out[0] != 0.:
                 # rospy.logwarn("filte();r output: %s"%self.filter_out)
                 self.joint_data.data = self.filter_out
+
                 self.pub_joint.publish(self.joint_data)
+
         self.pre_joint1 = list_[0]
         self.pre_joint6 = list_[5]
-    ####deprecated#####
-    # def check_control_law(self):
-    #     if self.control_law().item(1) < 0 and self.control_law().item(2) < 0:
-    #         return True
-    #     else:
-    #         return False
-    ##################
 
     def check_region(self):
         if (np.square(self.joint_vel.item(1)) + np.square(self.joint_vel.item(2))) > 0.06:
@@ -354,7 +456,7 @@ class HybridVS(object):
         #     tmp += self.control_law().item(i)
         # self.joint_data.data = tmp
         # self.get_cur_total_positions()
-        if self.check_get_tf() and self.check_interaction_mat():
+        if self.check_get_tf() and self.check_interaction_mat() and not self.emergency:
             # for i in list(xrange(1,3)):
             #     self.joint_data.data[i] = self.cur_total_positions[i] - 1.4 * self.control_law().item(i)
             # rospy.logwarn("Get interaction")
@@ -368,10 +470,10 @@ class HybridVS(object):
                 # rospy.logwarn("joint 3 input: %.4f"%self.joint_vel.item(2))
                 # rospy.logerr("joint 5 : %.4f"%self.joint_vel.item(4))
                 self.get_cur_total_positions()
-                self.joint_data.data[0] = self.cur_total_positions[0] - 0.6 * self.joint_vel.item(0)
+                self.joint_data.data[0] = self.cur_total_positions[0] - 0.4 * self.joint_vel.item(0)
                 # self.joint_data.data[0] = self.cur_total_positions[0] + 1.2 * self.control_law().item(0)
-                self.joint_data.data[1] = self.cur_total_positions[1] + 0.6 * self.joint_vel.item(1)
-                self.joint_data.data[2] = self.cur_total_positions[2] + 0.6 * self.joint_vel.item(2)
+                self.joint_data.data[1] = self.cur_total_positions[1] + 0.5 * self.joint_vel.item(1)
+                self.joint_data.data[2] = self.cur_total_positions[2] + 0.5 * self.joint_vel.item(2)
 
                 # self.joint_data.data[3] = 0.0
                 self.joint_data.data[3] = self.cur_total_positions[3]
@@ -383,6 +485,9 @@ class HybridVS(object):
 
                 # rospy.loginfo("\njoint vel: %s"%tmp)
                 self.filter_data(self.joint_data.data)
+        if self.emergency:
+            self.joint_data.data = [1.67, 1.55, 1.2, 0.0, 0.5, 0., -0.8]
+            self.pub_joint_goal.publish(self.joint_data)
 
         else:
             # rospy.logerr("current joint")
@@ -391,10 +496,16 @@ class HybridVS(object):
 
         # self.filter_data(self.joint_data.data)
 
+    def check_arm_back(self):
+        if math.fabs(self.cur_mx_positions[1] - 1.55) < 0.3:
+            return True
+        else:
+            return False
+
     def check_arrival(self):
         cur_joint = self.pbvs.tracker.get_cur_joint()
         goal_joint = self.grasp_joint_data.data
-        rospy.loginfo("\ncurrent joint : %s\ngoal joint : %s"%(cur_joint, goal_joint))
+        # rospy.loginfo("\ncurrent joint : %s\ngoal joint : %s"%(cur_joint, goal_joint))
         err = [0., 0., 0., 0., 0., 0., 0.]
         sum_err_square = 0.
         # rospy.logerr("cur_joint : %d"%len(cur_joint))
@@ -405,10 +516,11 @@ class HybridVS(object):
         # if sum_err_square < 0.07:
         #     self.arrival = True
 
-        if math.fabs(cur_joint[2] - goal_joint[2]) < 0.02 and math.fabs(cur_joint[1] - goal_joint[1]) < 0.02:
+        if math.fabs(cur_joint[1] - goal_joint[1]) < 0.15:
             self.arrival = True
             return True
         else:
+
             return False
 
     def grasp(self):
@@ -422,29 +534,32 @@ class HybridVS(object):
 
             if self.first_grasp:
                 if self.pbvs.tracker.invekine():
-                    self.grasp_joint_data.data = self.pbvs.tracker.invekine()
+                    # self.pbvs.tracker.final_joint_value()
+                    self.grasp_joint_data.data = self.pbvs.tracker.final_joint_value()
                     # rospy.logwarn(self.joint_data.data)
                     self.grasp_joint_data.data[3] = 0.
                     self.grasp_joint_data.data[5] = 0.
                     self.first_grasp_time = rospy.Time.now()
                     rospy.loginfo("Time to grasp at %f "%self.first_grasp_time.to_sec())
-                    self.pub_joint.publish(self.grasp_joint_data)
+                    self.pub_joint_goal.publish(self.grasp_joint_data)
                     self.first_grasp = False
                 else:
                     rospy.logerr("No invekine!!")
+
         if self.grasp_joint_data.data[0] != 0.:
             self.check_arrival()
         if self.arrival:
             rospy.logwarn_throttle(60, "Arrive!!!")
-            self.grasp_joint_data.data[6] = -0.9
-            self.pub_joint.publish(self.grasp_joint_data)
-            if math.fabs(self.pbvs.tracker.get_cur_joint()[6] + 0.9) < 0.1:
-                self.grasp_joint_data.data = [1.57, 1.5, 1.1, 0.0, 0.5, 0.0, -0.9]
+            self.grasp_joint_data.data[6] = -0.8
+            self.pub_joint_goal.publish(self.grasp_joint_data)
+            if math.fabs(self.pbvs.tracker.get_cur_joint()[6] + 0.8) < 0.1:
+                self.grasp_joint_data.data = [1.66, 1.5, 1.1, 0.0, 0.5, 0.0, -0.8]
                 self.pub_joint.publish(self.grasp_joint_data)
                 if math.fabs(self.pbvs.tracker.get_cur_joint()[1] - 1.5) < 0.1 and \
                     math.fabs(self.pbvs.tracker.get_cur_joint()[2] - 1.1) < 0.1 and \
                     math.fabs(self.pbvs.tracker.get_cur_joint()[4] - 0.5) < 0.1 and \
-                    math.fabs(self.pbvs.tracker.get_cur_joint()[6] + 0.9) < 0.1 :
+                    math.fabs(self.pbvs.tracker.get_cur_joint()[6] + 0.8) < 0.1 :
+                    rospy.logwarn_throttle(60,"Grasp Done!!!")
                     return True
         return False
 
@@ -457,7 +572,7 @@ class HybridVS(object):
         self.pbvs.tracker.tf_pub()
         self.pbvs.tracker.desire_trans()
         self.fly_target_depth = self.pbvs.tracker.Tb_grasp_mat.item(2,3) + 0.15
-        rospy.logwarn("target depth to uav: %f"%hybrid_control.fly_target_depth)
+        rospy.logwarn("target depth to uav: %f"%self.fly_target_depth)
         return self.fly_target_depth
 
     def move_uav_to_target(self):
@@ -488,29 +603,30 @@ class HybridVS(object):
 
         self.pub_uav_move.publish(self.uav_set_position)
 
-if __name__ == '__main__':
-    rospy.init_node('pbvs_control', anonymous=True)
-    # pbvs_control = Pbvs()
-    hybrid_control = HybridVS()
-
-    rate = rospy.Rate(100)
-
-    while not rospy.is_shutdown():
-        # hybrid_control.pbvs.tracker.get_now_tf()
-        hybrid_control.pbvs.tracker.get_theta_u()
-
-        if hybrid_control.pbvs.tracker.get_now_tf() and not hybrid_control.grasp_flag:
-            if not hybrid_control.grasp_flag:
-
-                hybrid_control.pub_joint_data()
-
-                if hybrid_control.get_fly_target_depth() > 0.55:
-                    hybrid_control.move_uav_to_target()
-
-
-            # hybrid_control.hybrid_interaction_mat()
-        if hybrid_control.grasp_flag:
-                # rospy.loginfo("haha")
-                hybrid_control.grasp()
-
-        rate.sleep()
+# if __name__ == '__main__':
+#     rospy.init_node('pbvs_control', anonymous=True)
+#     # pbvs_control = Pbvs()
+#     hybrid_control = HybridVS()
+#
+#     rate = rospy.Rate(100)
+#
+#     while not rospy.is_shutdown():
+#         hybrid_control.pbvs.tracker.get_now_tf()
+#         # hybrid_control.pbvs.tracker.get_theta_u()
+#
+#         if hybrid_control.pbvs.tracker.get_now_tf() and not hybrid_control.grasp_flag:
+#             if not hybrid_control.grasp_flag:
+#
+#                 hybrid_control.pub_joint_data()
+#                 hybrid_control.pbvs.pub_error()
+#
+#                 # if hybrid_control.get_fly_target_depth() > 0.55:
+#                 #     hybrid_control.move_uav_to_target()
+#
+#
+#             # hybrid_control.hybrid_interaction_mat()
+#         if hybrid_control.grasp_flag:
+#                 # rospy.loginfo("haha")
+#                 hybrid_control.grasp()
+#
+#         rate.sleep()

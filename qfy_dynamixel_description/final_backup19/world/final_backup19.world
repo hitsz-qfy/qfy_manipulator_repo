@@ -7,6 +7,7 @@
     <include>
       <uri>model://sun</uri>
     </include>
+
     <physics type='ode'>
       <ode>
         <solver>
@@ -26,5 +27,16 @@
       <real_time_update_rate>100</real_time_update_rate>
       <gravity>0 0 -9.8</gravity>
     </physics>
+
+
+        <include>
+
+          <uri>model://marker0</uri>
+		      <pose>1.623802 0.514867 0 
+		0 0 -0.849034</pose>
+        </include>
+
+
+
   </world>
 </sdf>

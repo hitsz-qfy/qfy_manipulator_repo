@@ -50,7 +50,7 @@
 <!--ibvs/hybrid_vs node-->
   <node  pkg="qfy_ibvs" type="apriltag_points_node" name="apriltag_points_node" output="screen">
     <rosparam param="tag_descriptions">[
-      {id: 47, size: 0.034000,frame_id: target1},
+      {id: 48, size: 0.034000,frame_id: target1},
       ]
     </rosparam>
   </node>

@@ -42,32 +42,32 @@ class Ibvs(object):
 
 
         self.des_point0 = ImagePoint2D()
-        self.des_point0.pixel.x = 254.
-        self.des_point0.pixel.y = 341.
+        self.des_point0.pixel.x = 295.47
+        self.des_point0.pixel.y = 257.60
         vec_point0_pixel = np.asmatrix([self.des_point0.pixel.x, self.des_point0.pixel.y, 1]).T
         self.des_point0_metric_mat = self.camera_intrinsic_mat.I * vec_point0_pixel
         self.des_point0.normalized.x = self.des_point0_metric_mat.item(0)
         self.des_point0.normalized.y = self.des_point0_metric_mat.item(1)
 
         self.des_point1 = ImagePoint2D()
-        self.des_point1.pixel.x = 343.
-        self.des_point1.pixel.y = 343.
+        self.des_point1.pixel.x = 383.38
+        self.des_point1.pixel.y = 260.61
         vec_point1_pixel = np.asmatrix([self.des_point1.pixel.x, self.des_point1.pixel.y, 1]).T
         self.des_point1_metric_mat = self.camera_intrinsic_mat.I * vec_point1_pixel
         self.des_point1.normalized.x = self.des_point1_metric_mat.item(0)
         self.des_point1.normalized.y = self.des_point1_metric_mat.item(1)
 
         self.des_point2 = ImagePoint2D()
-        self.des_point2.pixel.x = 346.
-        self.des_point2.pixel.y = 249.
+        self.des_point2.pixel.x = 387.11
+        self.des_point2.pixel.y = 167.05
         vec_point2_pixel = np.asmatrix([self.des_point2.pixel.x, self.des_point2.pixel.y, 1]).T
         self.des_point2_metric_mat = self.camera_intrinsic_mat.I * vec_point2_pixel
         self.des_point2.normalized.x = self.des_point2_metric_mat.item(0)
         self.des_point2.normalized.y = self.des_point2_metric_mat.item(1)
 
         self.des_point3 = ImagePoint2D()
-        self.des_point3.pixel.x = 256.
-        self.des_point3.pixel.y = 246.
+        self.des_point3.pixel.x = 298.37
+        self.des_point3.pixel.y = 163.47
         vec_point3_pixel = np.asmatrix([self.des_point3.pixel.x, self.des_point3.pixel.y, 1]).T
         self.des_point3_metric_mat = self.camera_intrinsic_mat.I * vec_point3_pixel
         self.des_point3.normalized.x = self.des_point3_metric_mat.item(0)
@@ -77,7 +77,7 @@ class Ibvs(object):
 
         self.get_tf = False
 
-        self.safe_roi = 0.4 ###0 to 0.5
+        self.safe_roi = 0.48 ###0 to 0.5
         self.safe_range = {'xs_plus': 210., 'xs_minus': 400., 'ys_plus': 130., 'ys_minus': 310.}
         self.image_border = {'x_up':  640., 'x_down': 0., 'y_up': 480., 'y_down': 0.}
 
@@ -89,7 +89,7 @@ class Ibvs(object):
                                        self.des_point3.normalized.x, self.des_point3.normalized.y]
 
     def calcu_error(self, points):
-        # rospy.loginfo(
+            # rospy.loginfo(
         #     "des point0 normalized : %.4f, %.4f" % (self.des_point0.normalized.x, self.des_point0.normalized.y))
         # rospy.loginfo(
         #     "des point1 normalized : %.4f, %.4f" % (self.des_point1.normalized.x, self.des_point1.normalized.y))
@@ -217,21 +217,21 @@ class Ibvs(object):
             while i < 8:
                 if i%2 == 0:
                     ##########original interaction matrix #######
-                    self.original_interaction_mat.itemset((i, 0),
-                                                     - 1. / self.tracker.trans[2])
-                    self.original_interaction_mat.itemset((i, 1),
-                                                     0.)
-                    self.original_interaction_mat.itemset((i, 2),
-                                                     self.cur_points_metric_list[i] / self.tracker.trans[2])
-                    self.original_interaction_mat.itemset((i, 3),
-                                                     self.cur_points_metric_list[i] * self.cur_points_metric_list[
-                                                         i + 1])
-                    self.original_interaction_mat.itemset((i, 4),
-                                                     - (
-                                                     1 + self.cur_points_metric_list[i] * self.cur_points_metric_list[
-                                                         i]))
-                    self.original_interaction_mat.itemset((i, 5),
-                                                     self.cur_points_metric_list[i + 1])
+                    # self.original_interaction_mat.itemset((i, 0),
+                    #                                  - 1. / self.tracker.trans[2])
+                    # self.original_interaction_mat.itemset((i, 1),
+                    #                                  0.)
+                    # self.original_interaction_mat.itemset((i, 2),
+                    #                                  self.cur_points_metric_list[i] / self.tracker.trans[2])
+                    # self.original_interaction_mat.itemset((i, 3),
+                    #                                  self.cur_points_metric_list[i] * self.cur_points_metric_list[
+                    #                                      i + 1])
+                    # self.original_interaction_mat.itemset((i, 4),
+                    #                                  - (
+                    #                                  1 + self.cur_points_metric_list[i] * self.cur_points_metric_list[
+                    #                                      i]))
+                    # self.original_interaction_mat.itemset((i, 5),
+                    #                                  self.cur_points_metric_list[i + 1])
 
                     #########current interaction matrix ############
                     self.cur_interaction_mat.itemset((i, 0),
@@ -241,11 +241,11 @@ class Ibvs(object):
                     self.cur_interaction_mat.itemset((i, 2),
                                                  self.cur_points_metric_list[i] / self.point_depth[i/2])
                     self.cur_interaction_mat.itemset((i, 3),
-                                                 self.cur_points_metric_list[i] * self.cur_points_metric_list[i + 1])
+                                                 - self.cur_points_metric_list[i] * self.cur_points_metric_list[i + 1])
                     self.cur_interaction_mat.itemset((i, 4),
-                                                 - (1 + self.cur_points_metric_list[i] * self.cur_points_metric_list[i]))
+                                                 (1 + self.cur_points_metric_list[i] * self.cur_points_metric_list[i]))
                     self.cur_interaction_mat.itemset((i, 5),
-                                                 self.cur_points_metric_list[i + 1])
+                                                 - self.cur_points_metric_list[i + 1])
 
                     #######desired interaction matrix ##############
                     self.des_interaction_mat.itemset((i, 0),
@@ -255,14 +255,14 @@ class Ibvs(object):
                     self.des_interaction_mat.itemset((i, 2),
                                                      self.des_points_metric_list[i] / self.des_depth)
                     self.des_interaction_mat.itemset((i, 3),
-                                                     self.des_points_metric_list[i] * self.des_points_metric_list[
+                                                     - self.des_points_metric_list[i] * self.des_points_metric_list[
                                                          i + 1])
                     self.des_interaction_mat.itemset((i, 4),
-                                                     - (
+                                                     (
                                                      1 + self.des_points_metric_list[i] * self.des_points_metric_list[
                                                          i]))
                     self.des_interaction_mat.itemset((i, 5),
-                                                     self.des_points_metric_list[i + 1])
+                                                     - self.des_points_metric_list[i + 1])
 
                     ########mean interaction matrix ###########
                     self.mean_interaction_mat.itemset((i, 0),
@@ -288,20 +288,20 @@ class Ibvs(object):
                     i += 1
                 else:
                     ##########original interaction matrix #########
-                    self.original_interaction_mat.itemset((i, 0),
-                                                     0.)
-                    self.original_interaction_mat.itemset((i, 1),
-                                                     - 1. / self.tracker.trans[2])
-                    self.original_interaction_mat.itemset((i, 2),
-                                                     self.cur_points_metric_list[i] / self.tracker.trans[2])
-                    self.original_interaction_mat.itemset((i, 3),
-                                                     (1 + self.cur_points_metric_list[i] * self.cur_points_metric_list[
-                                                         i]))
-                    self.original_interaction_mat.itemset((i, 4),
-                                                     - self.cur_points_metric_list[i] * self.cur_points_metric_list[
-                                                         i - 1])
-                    self.original_interaction_mat.itemset((i, 5),
-                                                     - self.cur_points_metric_list[i - 1])
+                    # self.original_interaction_mat.itemset((i, 0),
+                    #                                  0.)
+                    # self.original_interaction_mat.itemset((i, 1),
+                    #                                  - 1. / self.tracker.trans[2])
+                    # self.original_interaction_mat.itemset((i, 2),
+                    #                                  self.cur_points_metric_list[i] / self.tracker.trans[2])
+                    # self.original_interaction_mat.itemset((i, 3),
+                    #                                  (1 + self.cur_points_metric_list[i] * self.cur_points_metric_list[
+                    #                                      i]))
+                    # self.original_interaction_mat.itemset((i, 4),
+                    #                                  - self.cur_points_metric_list[i] * self.cur_points_metric_list[
+                    #                                      i - 1])
+                    # self.original_interaction_mat.itemset((i, 5),
+                    #                                  - self.cur_points_metric_list[i - 1])
 
                     ##########current interaction matrix #########
                     self.cur_interaction_mat.itemset((i, 0),
@@ -311,12 +311,11 @@ class Ibvs(object):
                     self.cur_interaction_mat.itemset((i, 2),
                                                  self.cur_points_metric_list[i] / self.point_depth[i/2])
                     self.cur_interaction_mat.itemset((i, 3),
-                                                 (1 + self.cur_points_metric_list[i] * self.cur_points_metric_list[i]))
+                                                 - (1 + self.cur_points_metric_list[i] * self.cur_points_metric_list[i]))
                     self.cur_interaction_mat.itemset((i, 4),
-                                                 - self.cur_points_metric_list[i] * self.cur_points_metric_list[i - 1])
+                                                 self.cur_points_metric_list[i] * self.cur_points_metric_list[i - 1])
                     self.cur_interaction_mat.itemset((i, 5),
-                                                 - self.cur_points_metric_list[i - 1])
-
+                                                 self.cur_points_metric_list[i - 1])
 
                     ########desired interaction matrix #########
                     self.des_interaction_mat.itemset((i, 0),
@@ -326,13 +325,13 @@ class Ibvs(object):
                     self.des_interaction_mat.itemset((i, 2),
                                                      self.des_points_metric_list[i] / self.des_depth)
                     self.des_interaction_mat.itemset((i, 3),
-                                                     (1 + self.des_points_metric_list[i] * self.des_points_metric_list[
+                                                     - (1 + self.des_points_metric_list[i] * self.des_points_metric_list[
                                                          i]))
                     self.des_interaction_mat.itemset((i, 4),
-                                                     - self.des_points_metric_list[i] * self.des_points_metric_list[
+                                                     self.des_points_metric_list[i] * self.des_points_metric_list[
                                                          i - 1])
                     self.des_interaction_mat.itemset((i, 5),
-                                                     - self.des_points_metric_list[i - 1])
+                                                     self.des_points_metric_list[i - 1])
 
                     #######mean interaction matrix ##############
                     self.mean_interaction_mat.itemset((i, 0),
@@ -405,7 +404,7 @@ class Ibvs(object):
                     self.h_vec.itemset(i, (list_[i] - self.safe_range['xs_minus']) /
                                        (self.image_border['x_down'] - list_[i]))
                 else:
-                    self.h_vec.itemset(i, 0.001)
+                    self.h_vec.itemset(i, 0.1)
             else:
                 if list_[i] > self.safe_range['ys_plus']:
                     self.h_vec.itemset(i, (list_[i] - self.safe_range['ys_plus']) /
@@ -414,7 +413,7 @@ class Ibvs(object):
                     self.h_vec.itemset(i, (list_[i] - self.safe_range['ys_minus']) /
                                        (self.image_border['y_down'] - list_[i]))
                 else:
-                    self.h_vec.itemset(i, 0.001)
+                    self.h_vec.itemset(i, 0.1)
         # self.h_vec *= 2
         # rospy.logwarn("h_vec element: %s"%self.h_vec)
 
@@ -441,8 +440,10 @@ class Ibvs(object):
         self.tracker.get_theta_u()
         rotation = tf.transformations.quaternion_matrix(self.tracker.rot)
         trans = np.asmatrix(self.tracker.trans).T
+        # print rotation, trans
         # R_T = np.concatenate([rotation, trans], axis=1)
         R_T = np.concatenate([np.concatenate([rotation[np.ix_([0,1,2],[0,1,2])], trans], axis=1), np.matrix([0,0,0,1])], axis=0)
+
         intrinsic_mat = np.concatenate([self.camera_intrinsic_mat, np.matrix([0,0,0]).T], axis=1)
         p0 = intrinsic_mat * R_T * self.point0_obj.T
         p0.itemset(0, p0.item(0) / p0.item(2))
@@ -494,9 +495,12 @@ class Ibvs(object):
         # print self.point_depth
         # print R_T
         # print(tf.transformations.euler_from_matrix(rotation))
-        self.get_point_depth()
+        # self.get_point_depth()
 
         if self.check_get_tf():
+
+            self.get_point_depth()
+
             self.cur_points_metric_list = [msg.p0.normalized.x, msg.p0.normalized.y,
                                msg.p1.normalized.x, msg.p1.normalized.y,
                                msg.p2.normalized.x, msg.p2.normalized.y,

@@ -21,6 +21,8 @@ add_message_files(
 	FILES 
 	multi_joint_point.msg 
 	PbvsErrorStamped.msg
+    Imagepoint.msg
+    IbvsErrorStamped.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -84,8 +86,8 @@ target_link_libraries(keyboard ${catkin_LIBRARIES})
 ## in contrast to setup.py, you can choose the destination
 install(PROGRAMS
   #scripts/trajectory_sub_client.py
-  scripts/trajectory_ax_client.py 
-  scripts/trajectory_mx_client.py 
+  scripts/trajectory_ax_client.py
+  scripts/trajectory_mx_client.py
   scripts/pub_joint.py
   scripts/kinematic.py
   scripts/track_client.py
@@ -93,6 +95,7 @@ install(PROGRAMS
   scripts/qfy_joint_trajectory.py
   scripts/mx_position_speed.py
   scripts/ax_position_speed.py
+  scripts/uav_vs.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

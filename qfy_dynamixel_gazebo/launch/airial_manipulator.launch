@@ -54,5 +54,14 @@
   
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
 
-    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" /> 
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+
+  <node  pkg="apriltags_ros" type="apriltag_detector_node" name="apriltag_detector">
+    <remap from="image_rect" to="/mybot/camera1/image_raw" />
+    <remap from="camera_info" to="/mybot/camera1/camera_info" />
+    <rosparam param="tag_descriptions">[
+      {id: 0, size: 0.5,frame_id: target1},
+      ]
+    </rosparam>
+  </node>
 </launch>

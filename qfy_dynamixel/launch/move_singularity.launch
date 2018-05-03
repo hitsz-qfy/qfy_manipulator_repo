@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="qfy_dynamixel" name="vs_interplation" type="vs_interplation.py" output="screen"/>
+    <node pkg="qfy_dynamixel" name="hybrid_vs" type="visual_servo.py" output="screen"/>
+    <node pkg="qfy_dynamixel" name="trajectory"  type="trajectory.py" output="screen"/>
+</launch>

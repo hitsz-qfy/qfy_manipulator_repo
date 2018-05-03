@@ -24,7 +24,7 @@ int main(int argc, char **argv){
     std_msgs::Float64 time_to_grasp;
     time_to_grasp.data = 0.;
     ROS_INFO_ONCE("Press a to grasp, q to quit!!");
-	while (ros::ok())
+    while (ros::ok())
     {
 		int c = getch();   // call your non-blocking input function
   		if (c == 'a')
@@ -35,7 +35,7 @@ int main(int argc, char **argv){
         if (c == 'b')
         {
             ROS_INFO("Flag clear!!!");
-            time_to_grasp.data = 0.0;
+            time_to_grasp.data = 0.5;
         }
         if (c == 'q')
             ros::shutdown();

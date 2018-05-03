@@ -46,7 +46,7 @@ class Pbvs(object):
         a00 = - np.identity(3)
         a01 = self.tracker.vector_skewmatrix(self.tracker.trans)
         a10 = np.asmatrix(np.zeros((3,3)))
-        a11 = np.identity(3)   ###########attantion, 与原文不一致，　多了个负号#######
+        a11 = - np.identity(3)   ########### attantion, 与原文不一致，　多了个负号#######
         self.interaction_mat = np.bmat([[a00,a01], [a10,a11]])
         # rospy.loginfo(self.interaction_mat)
         return self.interaction_mat
@@ -77,7 +77,7 @@ class Pbvs(object):
         self.pbvs_error.theta_mu.x = self.tracker.get_theta_u().item(0)
         self.pbvs_error.theta_mu.y = self.tracker.get_theta_u().item(1)
         self.pbvs_error.theta_mu.z = self.tracker.get_theta_u().item(2)
-        self.pub_pbvs_error.publish(self.pub_pbvs_error)
+        self.pub_pbvs_error.publish(self.pbvs_error)
 
     # def mx_state_cb(self, msg):
     #     for motor_state in msg.motor_states:
@@ -100,6 +100,7 @@ class Pbvs(object):
         self.error_translation = - self.tracker.get_tcstar_o_mat() + self.tracker.get_tc_o_mat()
         # rospy.logwarn(self.error_translation)
         self.error_orientation = self.tracker.get_theta_u()  ##### wrong 期望的角度不是０#######
+        self.pub_error()
         # rospy.loginfo(self.error_orientation)
 
 

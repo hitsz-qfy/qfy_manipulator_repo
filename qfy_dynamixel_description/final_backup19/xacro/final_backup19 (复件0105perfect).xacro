@@ -1,0 +1,622 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- origin of joint connecting battery and mav -->
+  <xacro:property name="manipulator_base_joint">
+    <origin xyz="0 0 -0.03" rpy="1.57 0 0.785398" />
+  </xacro:property>
+  <xacro:macro name="final_backup19"  params="parent_link">
+
+  <xacro:include filename="$(find qfy_dynamixel_description)/final_backup19/urdf/final_backup19.gazebo" />
+   <!-- add a camera to the manipulator -->
+<xacro:property name="cameraSize" value="0.05"/>
+<xacro:property name="cameraMass" value="0.05"/>
+  <link
+    name="manipulator_base_link">
+    <inertial>
+      <origin
+        xyz="0.08963 -0.0446 0.39944"
+        rpy="0 0 0" />
+      <mass
+        value="0.11" />
+      <inertia
+        ixx="0.000415"
+        ixy="0"
+        ixz="0"
+        iyy="0.002041"
+        iyz="0"
+        izz="0.00222" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/final_backup19/meshes/base_link.stl" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/final_backup19/meshes/base_link.stl" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="${namespace}/manipulator_base_joint" type="fixed">
+      <xacro:insert_block name="manipulator_base_joint"  />
+      <parent link="${parent_link}" />
+      <child link="manipulator_base_link"  />
+  </joint>
+
+  <link
+    name="link64">
+    <inertial>
+      <origin
+        xyz="-0.015203 0 -0.031688"
+        rpy="0 0 0" />
+      <mass
+        value="0.016" />
+      <inertia
+        ixx="1.696071E-05"
+        ixy="0"
+        ixz="0"
+        iyy="2.983622E-05"
+        iyz="0"
+        izz="2.490107E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/final_backup19/meshes/link64.stl" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/final_backup19/meshes/link64.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint1"
+    type="fixed">
+    <origin
+      xyz="0 -0.1095 0.113781469737573"
+      rpy="-1.5707963267949 0 3.14159265358979" />
+    <parent
+      link="manipulator_base_link" />
+    <child
+      link="link64" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="link106">
+    <inertial>
+      <origin
+        xyz="0.0008 -0.000446439663782217 0.000463562291337372"
+        rpy="0 0 0" />
+      <mass
+        value="0.013" />
+      <inertia
+        ixx="0.02"
+        ixy="0"
+        ixz="0"
+        iyy="0.03"
+        iyz="0"
+        izz="0.04" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/final_backup19/meshes/link106.stl" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/final_backup19/meshes/link106.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint2"
+    type="continuous">
+    <origin
+      xyz="0 0 0.0475000000000002"
+      rpy="-3.1415926 0 -1.57079632678592" />
+    <parent
+      link="link64" />
+    <child
+      link="link106" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics damping="0.2"/>
+  </joint>
+  <link name="linkarm">
+    <inertial>
+      <origin
+        xyz="-0.194877290967126 -0.00576787415600104 3.91414554237191E-05"
+        rpy="0 0 0" />
+      <mass
+        value="0.1" />
+      <inertia
+        ixx="0.000385893343404741"
+        ixy="0"
+        ixz="0"
+        iyy="0.00250221211288874"
+        iyz="0"
+        izz="0.00235494022023587" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/final_backup19/meshes/linkarm.stl" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/final_backup19/meshes/linkarm.stl" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint
+    name="joint3"
+    type="continuous">
+    <origin
+      xyz="-0.00699999999999945 0 0"
+      rpy="1.5707963267949 0 0" />
+    <parent
+      link="link106" />
+    <child
+      link="linkarm" />
+    <axis
+      xyz="0 0 -1" />
+    <dynamics damping="0.2"/>
+  </joint>
+
+  <link
+    name="link4">
+    <inertial>
+      <origin
+        xyz="0.0339143141029004 -0.0216059432586347 -0.000344012488018741"
+        rpy="0 0 0" />
+      <mass
+        value="0.01" />
+      <inertia
+        ixx="0.002"
+        ixy="0"
+        ixz="0"
+        iyy="0.002"
+        iyz="0"
+        izz="0.002" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/final_backup19/meshes/link4.stl" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/final_backup19/meshes/link4.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint4"
+    type="continuous">
+    <origin
+      xyz="-0.2695 0 0"
+      rpy="0 0 3.1415926" />
+    <parent
+      link="linkarm" />
+    <child
+      link="link4" />
+    <axis
+      xyz="0 0 -1" />
+    <dynamics damping="0.2"/>
+  </joint>
+
+  <link
+    name="link5">
+    <inertial>
+      <origin
+        xyz="-0.000494753845148299 5.33223484197598E-05 0.0474107095982823"
+        rpy="0 0 0" />
+      <mass
+        value="0.01" />
+      <inertia
+        ixx="0.01"
+        ixy="0"
+        ixz="0"
+        iyy="0.01"
+        iyz="0"
+        izz="0.01" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/final_backup19/meshes/link5.stl" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/final_backup19/meshes/link5.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint5"
+    type="continuous">
+    <origin
+      xyz="0 0 0"
+      rpy="1.5708 0 -3.1416" />
+    <parent
+      link="link4" />
+    <child
+      link="link5" />
+    <axis
+      xyz="0 0 -1" />
+    <dynamics damping="0.2"/>
+  </joint>
+
+  <link
+    name="link6">
+    <inertial>
+      <origin
+        xyz="0.0397412413926714 -0.0056532487086761 0.00041862620102906"
+        rpy="0 0 0" />
+      <mass
+        value="0.02" />
+      <inertia
+        ixx="0.01"
+        ixy="0"
+        ixz="0"
+        iyy="0.01"
+        iyz="0"
+        izz="0.01" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/final_backup19/meshes/link6.stl" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/final_backup19/meshes/link6.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint6"
+    type="continuous">
+    <origin
+      xyz="0 0 0.10384"
+      rpy="-1.5708 0 0" />
+    <parent
+      link="link5" />
+    <child
+      link="link6" />
+    <axis
+      xyz="0 0 -1" />
+    <dynamics damping="0.2"/>
+  </joint>
+
+  <link
+    name="link7">
+    <inertial>
+      <origin
+        xyz="-0.000532254194662851 -2.66087286423522E-05 0.0389086395586657"
+        rpy="0 0 0" />
+      <mass
+        value="0.03" />
+      <inertia
+        ixx="0.01"
+        ixy="0"
+        ixz="0"
+        iyy="0.01"
+        iyz="0"
+        izz="0.01" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/final_backup19/meshes/link7.stl" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/final_backup19/meshes/link7.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint7"
+    type="continuous">
+    <origin
+      xyz="0 0 0"
+      rpy="1.5708 0 1.5708" />
+    <parent
+      link="link6" />
+    <child
+      link="link7" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics damping="0.2"/>
+  </joint>
+  <link
+    name="finger_right">
+    <inertial>
+      <origin
+        xyz="-0.00748768832529589 -0.0278311213163985 0.00859866720335856"
+        rpy="0 0 0" />
+      <mass
+        value="0.001" />
+      <inertia
+        ixx="0.01"
+        ixy="0"
+        ixz="0"
+        iyy="0.06"
+        iyz="0"
+        izz="0.06" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/final_backup19/meshes/finger_right.stl" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/final_backup19/meshes/finger_right.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint_finger_right"
+    type="continuous">
+    <origin
+      xyz="0 0.0155000000000001 0.0813406770370231"
+      rpy="1.57079632679493 0 -1.5707963267949" />
+    <parent
+      link="link7" />
+    <child
+      link="finger_right" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics damping="0.2"/>
+  </joint>
+  <link
+    name="finger_left">
+    <inertial>
+      <origin
+        xyz="-0.00997288818590492 -0.0259107826806514 0.00776123843743221"
+        rpy="0 0 0" />
+      <mass
+        value="0.001" />
+      <inertia
+        ixx="0.01"
+        ixy="0"
+        ixz="0"
+        iyy="0.07"
+        iyz="0"
+        izz="0.06" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/final_backup19/meshes/finger_left.stl" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://qfy_dynamixel_description/final_backup19/meshes/finger_left.stl" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint
+    name="joint_finger_left"
+    type="continuous">
+    <origin
+      xyz="0 -0.0145 0.0813406770370233"
+      rpy="1.57079632679492 0 -1.5707963267949" />
+    <parent
+      link="link7" />
+    <child
+      link="finger_left" />
+    <axis
+      xyz="0 0 -1" />
+    <dynamics damping="0.2"/>
+  </joint>
+
+
+
+
+
+<!-- the plugin of the joint's controller -->
+  <transmission name="tran2">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint2">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor2">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="tran3">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint3">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor3">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="tran4">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint4">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor4">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="tran5">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint5">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor5">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="tran6">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint6">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor6">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="tran7">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint7">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor7">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="tran8">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint_finger_right">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor8">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="tran9">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint_finger_left">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor9">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+<!--
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/final_backup19</robotNamespace>
+      <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+    </plugin>
+  </gazebo>
+-->
+  </xacro:macro>
+</robot>
