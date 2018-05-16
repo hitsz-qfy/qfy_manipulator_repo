@@ -23,7 +23,7 @@ int main(int argc, char **argv){
     ros::Publisher pub_keyboard = nh.advertise<std_msgs::Float64>("/time_to_grasp", 100);
     std_msgs::Float64 time_to_grasp;
     time_to_grasp.data = 0.;
-    ROS_INFO_ONCE("Press a to grasp, q to quit!!");
+    ROS_INFO_ONCE("Press a to grasp, b to land, q to quit!!");
     while (ros::ok())
     {
 		int c = getch();   // call your non-blocking input function

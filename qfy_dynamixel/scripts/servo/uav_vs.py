@@ -103,7 +103,7 @@ if __name__ == '__main__':
 
             if grasp_procedure.init_position:
                 joint_p.header.stamp = rospy.Time.now()
-                joint_p.data = [1.67, 1.54, 1.2, 0.0, 0.5, 0.0, -0.8]#-0.8 close, 0.2 open
+                joint_p.data = [1.57, 1.54, 1.2, 0.0, 0.5, 0.0, -0.8]#-0.8 close, 0.2 open
                 grasp_procedure.pub_joint_goal_point.publish(joint_p)
                 grasp_procedure.check_joint_trj(grasp_procedure.cur_joint.data, joint_p.data)
 
@@ -118,7 +118,7 @@ if __name__ == '__main__':
                 joint_p.header.stamp = now
 
                 if now - grasp_procedure.init_grasp_time < rospy.Duration(5):
-                    joint_p.data = [1.67, 1.0, 0.5, 0.0, 0.4, 0.0, 0.2]
+                    joint_p.data = [1.57, 1.0, 0.5, 0.0, 0.4, 0.0, 0.2]
                     grasp_procedure.pub_joint_goal_point.publish(joint_p)
                     rospy.loginfo_throttle(60, "Trying to find Apriltags!!")
                 else:

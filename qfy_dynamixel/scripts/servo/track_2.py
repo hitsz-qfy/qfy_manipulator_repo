@@ -181,7 +181,7 @@ def invekine(n,a,P,a1=0.007,a2=0.280,d4=0.10387,d6=0.095):
     #value = [theta1 + np.pi / 2, theta2 + np.pi, np.pi*1.5 - theta3 , theta4, theta5, theta6] #origin
 
     #rospy.loginfo("origin: %s"%[theta1,theta2,theta3,theta4,theta5,theta6])
-    value = [-theta1 + 1.65, -theta2, theta3 - np.pi/2, theta4, theta5, theta6]
+    value = [-theta1 + 1.57, -theta2, theta3 - np.pi/2, theta4, theta5, theta6]
     result = [round(i,2) for i in value]
     return result
     # return [theta1+1.570796, theta2+1.570796, theta3, theta4, theta5, theta6]
@@ -219,7 +219,7 @@ class Track(object):
 
         self.Tgrasp = np.mat([[1, 0,  0,    0.0],  # 30
                                 [0, 1,  0,  -0.01],
-                                [0, 0,  1,  -0.06],#0.065
+                                [0, 0,  1,  0.04],#0.065
                                 [0, 0,  0,  1]
                                 ])
 
@@ -272,14 +272,6 @@ class Track(object):
         self.tf_trans.transform.rotation.y = msg.transforms[-1].transform.rotation.y
         self.tf_trans.transform.rotation.z = msg.transforms[-1].transform.rotation.z
 
-    # def m_result_callback(self,msg):
-    #     if msg.status.status == 3:
-    #         self.m_status = True
-    #
-    # def a_result_callback(self,msg):
-    #     self.ax_cb_flag += 1
-    #     if msg.status.status == 3:
-    #         self.a_status = True
 
     def kine_calcu(self):
         # self.kine=Kinematic(0.007,0.246,0.110,0.111)
@@ -288,21 +280,9 @@ class Track(object):
         return self.Tbe_mat
 
     def get_current_Tc_cstar(self,time):
-        # if fabs(self.tf_trans.header.stamp.to_sec() - time.to_sec())< 0.01:
-        #     self.trans = [self.tf_trans.transform.translation.x, self.tf_trans.transform.translation.y, self.tf_trans.transform.translation.z]
-        #     self.rot = [self.tf_trans.transform.rotation.x, self.tf_trans.transform.rotation.y, self.tf_trans.transform.rotation.z, self.tf_trans.transform.rotation.w]
-        #     return True
-        # else:
-        #     return False
-        # self.listener.waitForTransform('/camera','/target1',rospy.Time(), rospy.Duration(0.3))
         try:
-            # self.listener.waitForTransform('/camera','/target1',time, rospy.Duration(0.3))
-            # self.listener.waitForTransform('/camera','/target1',rospy.Time(0),rospy.Duration(10))
             (self.trans, self.rot) = self.listener.lookupTransform('/camera', '/target1', time)
-            # (self.trans,self.rot) = self.listener.lookupTransform('/camera', '/target1', rospy.Time(0))
-            # self.trans_pro = [i*1000 for i in self.trans]
-            # print self.trans
-            # print tf.transformations.euler_from_quaternion(self.rot)
+
             return True
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             rospy.logerr_throttle(60,"some tf exception happened")
@@ -327,23 +307,9 @@ class Track(object):
 
         self.Te_t = Tec_mat * self.Tct_mat
 
-        # self.Te_estar = np.row_stack(
-        #     (np.column_stack((self.rotation, self.trans)), [0, 0, 0, 1])) * self.Tt_cstar
 
-        # self.Te_estar = Tce*np.row_stack((np.column_stack((self.rotation,self.trans)),[0,0,0,1]))*self.Tt_cstar*Tec
-
-        # print self.Tbe*self.Te_estar
-        # return self.Tbe*self.Te_estar
-        # return self.Tbe_mat * T_const_mat *self.Te_t*Ttc_mat*Tc_ereal_mat
-
-        # return self.Tbd_mat*self.Tt_cstar
-        # return self.Tbd_mat
-        # print self.Tb_cstar_mat
         return self.Tb_grasp_mat
-        # return self.Tb_cstar_mat
-        # return self.kine_calcu()
 
-        # return self.Tbo_mat * Toc_mat * self.Tct_mat * self.Rtd * self.Tt_cstar
 
     def tf_pub(self):
         # print self.Tbe_mat

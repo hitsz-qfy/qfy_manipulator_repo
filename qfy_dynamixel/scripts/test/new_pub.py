@@ -14,8 +14,9 @@ if __name__ == '__main__':
     joint_data.header.stamp = rospy.Time.now()
     joint_data.id = ['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5', 'joint_6', 'joint_7']
 
-    joint_data.data = [1.67, 1.0, 0.5, 0.0, 0.6, 0.0, 0.2] ###origin
+    # joint_data.data = [1.57, 1.0, 0.5, 0.0, 0.6, 0.0, 0.2] ###origin
     # joint_data.data = [1.67, -0.5, 0.0, 0., -0.4, 0., -1.4]
+    joint_data.data = [1.57, 1.54, 1.2, 0.0, 0.5, 0.0, -0.8] ###origin
 
     up_flag = True
     down_flag = False

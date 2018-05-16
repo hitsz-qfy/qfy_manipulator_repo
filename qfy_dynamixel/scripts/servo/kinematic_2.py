@@ -29,7 +29,7 @@ class Kinematic(object):
 
 
     def mx_joint_callback(self, msg):
-        self.joint_value[0] = 1.67 - msg.motor_states[0].position
+        self.joint_value[0] = 1.57 - msg.motor_states[0].position
         self.joint_value[1] = - msg.motor_states[1].position
         self.joint_value[2] = np.pi/2. + msg.motor_states[2].position
         self.tmp_3 = msg.motor_states[2].position + np.pi
@@ -47,7 +47,7 @@ class Kinematic(object):
     def cur_joint(self):
     #     return [self.joint_value[0]+np.pi/2, -self.joint_value[1], self.tmp_3,  self.joint_value[3],
     #             self.joint_value[4], self.joint_value[5], self.joint_value[6]]
-        return [1.655 - self.joint_value[0], -self.joint_value[1], self.joint_value[2] - np.pi/2,  self.joint_value[3],
+        return [1.57 - self.joint_value[0], -self.joint_value[1], self.joint_value[2] - np.pi/2,  self.joint_value[3],
                 self.joint_value[4], self.joint_value[5], self.joint_value[6]]
 
     def kinematic_(self, joint_value):

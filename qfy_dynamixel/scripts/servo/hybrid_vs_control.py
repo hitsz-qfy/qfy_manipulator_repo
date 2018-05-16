@@ -486,7 +486,7 @@ class HybridVS(object):
                 # rospy.loginfo("\njoint vel: %s"%tmp)
                 self.filter_data(self.joint_data.data)
         if self.emergency:
-            self.joint_data.data = [1.67, 1.55, 1.2, 0.0, 0.5, 0., -0.8]
+            self.joint_data.data = [1.57, 1.55, 1.2, 0.0, 0.5, 0., -0.8]
             self.pub_joint_goal.publish(self.joint_data)
 
         else:
@@ -553,7 +553,7 @@ class HybridVS(object):
             self.grasp_joint_data.data[6] = -0.8
             self.pub_joint_goal.publish(self.grasp_joint_data)
             if math.fabs(self.pbvs.tracker.get_cur_joint()[6] + 0.8) < 0.1:
-                self.grasp_joint_data.data = [1.66, 1.5, 1.1, 0.0, 0.5, 0.0, -0.8]
+                self.grasp_joint_data.data = [1.57, 1.5, 1.1, 0.0, 0.5, 0.0, -0.8]
                 self.pub_joint.publish(self.grasp_joint_data)
                 if math.fabs(self.pbvs.tracker.get_cur_joint()[1] - 1.5) < 0.1 and \
                     math.fabs(self.pbvs.tracker.get_cur_joint()[2] - 1.1) < 0.1 and \
